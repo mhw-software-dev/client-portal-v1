@@ -8,7 +8,7 @@ export default async function CalendarPage() {
   const session = await getClientPortalSession();
 
   if (!session) {
-    redirect("/sign-in");
+    redirect("/sign-in?reason=session-expired");
   }
 
   return (

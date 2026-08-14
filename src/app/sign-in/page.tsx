@@ -7,11 +7,11 @@ import { SignInForm } from "@/components/sign-in-form";
 import { getClientPortalSession } from "@/lib/auth";
 
 type SignInPageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; reason?: string }>;
 };
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const [{ error }, session] = await Promise.all([
+  const [{ error, reason }, session] = await Promise.all([
     searchParams,
     getClientPortalSession(),
   ]);
@@ -39,7 +39,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               a secure sign-in link.
             </p>
           </div>
-          <SignInErrorNotice error={error} />
+          <SignInErrorNotice error={error} reason={reason} />
           <SignInForm />
           <div className="mhw-auth-help">
             <p>Need access?</p>

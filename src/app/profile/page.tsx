@@ -28,7 +28,7 @@ export default async function ProfilePage() {
   const session = await getClientPortalSession();
 
   if (!session) {
-    redirect("/sign-in");
+    redirect("/sign-in?reason=session-expired");
   }
 
   const profile = await getClientProfile(session.email);

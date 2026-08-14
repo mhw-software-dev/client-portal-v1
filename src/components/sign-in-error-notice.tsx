@@ -1,8 +1,9 @@
 type SignInErrorNoticeProps = {
   error?: string;
+  reason?: string;
 };
 
-const errorMessages: Record<string, { title: string; message: string }> = {
+const noticeMessages: Record<string, { title: string; message: string }> = {
   callback: {
     title: "We could not complete sign in",
     message:
@@ -26,12 +27,19 @@ const errorMessages: Record<string, { title: string; message: string }> = {
     message:
       "Each secure link can only be completed once. Request a new link below to continue.",
   },
+  "session-expired": {
+    title: "Session expired",
+    message:
+      "For your security, please request a new secure sign-in link to continue.",
+  },
 };
 
-export function SignInErrorNotice({ error }: SignInErrorNoticeProps) {
-  if (!error) return null;
+export function SignInErrorNotice({ error, reason }: SignInErrorNoticeProps) {
+  const noticeKey = error || reason;
 
-  const content = errorMessages[error] ?? errorMessages.invalid;
+  if (!noticeKey) return null;
+
+  const content = noticeMessages[noticeKey] ?? noticeMessages.invalid;
 
   return (
     <div className="mhw-auth-message is-error mhw-auth-error-notice" role="alert">

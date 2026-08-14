@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { AuthContinueForm } from "@/components/auth-continue-form";
 import { checkClientPortalAccess } from "@/lib/airtable";
 import {
   findClientPortalSignInToken,
@@ -107,10 +108,10 @@ export default async function AuthCallbackPage({ searchParams }: CallbackPagePro
               Client Portal session.
             </p>
           </div>
-          <form action={completeClientPortalSignIn} className="mhw-auth-form">
-            <input name="token" type="hidden" value={validation.token.token} />
-            <button type="submit">Continue to portal</button>
-          </form>
+          <AuthContinueForm
+            action={completeClientPortalSignIn}
+            token={validation.token.token}
+          />
           <div className="mhw-auth-help">
             <p>This link can only be completed once.</p>
             <Link href="/sign-in">Request a new link</Link>

@@ -2792,11 +2792,15 @@ img {
 }
 
 .mhw-auth-form button {
+  align-items: center;
   background: var(--mhw-green);
   border: 0;
   border-radius: 0.8rem;
   color: var(--mhw-white);
   cursor: pointer;
+  display: inline-flex;
+  gap: 0.6rem;
+  justify-content: center;
   font: inherit;
   font-weight: 900;
   min-height: 3.35rem;
@@ -2813,6 +2817,23 @@ img {
 .mhw-auth-form button:disabled {
   cursor: not-allowed;
   opacity: 0.62;
+}
+
+.mhw-auth-form button[aria-busy="true"]::before {
+  animation: mhw-spin 800ms linear infinite;
+  border: 2px solid rgb(255 255 255 / 0.45);
+  border-top-color: var(--mhw-white);
+  border-radius: 999px;
+  content: "";
+  height: 1rem;
+  width: 1rem;
+}
+
+.mhw-auth-submit-note {
+  color: var(--mhw-dark-grey);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  margin: -0.25rem 0 0;
 }
 
 .mhw-auth-note,

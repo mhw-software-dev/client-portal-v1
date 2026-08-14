@@ -102,6 +102,11 @@ function groupBookingsByWeekDay(bookings: HomeBooking[], weekStart: string) {
 }
 
 function getDefaultExpandedDay(groups: WeeklyBookingGroup[]) {
+  const todayKey = getLocalDateKey(new Date());
+  const todayGroup = groups.find((group) => group.key === todayKey);
+
+  if (todayGroup) return todayGroup.key;
+
   const firstDayWithBookings = groups.find((group) => group.items.length > 0);
 
   return firstDayWithBookings?.key ?? groups[0]?.key ?? "";

@@ -8,6 +8,7 @@ export type BookingDetailEvent = {
   date: string;
   displayDate?: string;
   genres?: string;
+  headshot?: string;
   hotel?: string;
   hotelTimezone?: string;
   instrumentation?: string;
@@ -64,10 +65,29 @@ function getTimezoneLabel(hotelTimezone?: string) {
 function getHref(value: string) {
   const trimmedValue = value.trim();
   if (!trimmedValue) return "";
+
+  const embeddedUrl = trimmedValue.match(/https?:\/\/[^\s|,]+|www\.[^\s|,]+/i)?.[0] || "";
+  if (embeddedUrl) {
+    return /^www\./i.test(embeddedUrl) ? `https://${embeddedUrl}` : embeddedUrl;
+  }
+
   if (/^https?:\/\//i.test(trimmedValue)) return trimmedValue;
   if (/^www\./i.test(trimmedValue)) return `https://${trimmedValue}`;
 
   return "";
+}
+
+function getAccountManagerContact(accountManager?: string) {
+  const normalizedName = accountManager?.trim().toLowerCase();
+
+  if (normalizedName === "tina brulport") {
+    return {
+      email: "tbrulport@mhwlivemusic.com",
+      phone: "(305) 414-1309",
+    };
+  }
+
+  return null;
 }
 
 export function BookingDetailModal({
@@ -91,25 +111,28 @@ export function BookingDetailModal({
   if (!event) return null;
 
   const scheduleSummary = [
+    ["Gig Date", getEventDateLabel(event)],
     ["Gig Time Span", event.time],
+    ["Timezone", event.hotelTimezone || "Property local time"],
     ["Venue", event.venue],
   ].filter(([, value]) => hasContent(value));
 
   const planningItems = [
     ["Client / property", event.hotel],
     ["Account Manager", event.accountManager],
-    ["MOD Phone", event.modPhone],
   ].filter(([, value]) => hasContent(value));
+
+  const accountManagerContact = getAccountManagerContact(event.accountManager);
 
   const performerItems = [
     ["Performer", event.performer],
+    ["Social Media or Website", event.socialMediaOrWebsite],
     ["Genres", event.genres],
     ["Instrumentation", event.instrumentation],
-    ["Social Media or Website", event.socialMediaOrWebsite],
   ].filter(([, value]) => hasContent(value));
   const socialHref = getHref(event.socialMediaOrWebsite || "");
   const additionalLinksHref = getHref(event.additionalPerformanceLinks || "");
-
+  const socialDisplayValue = socialHref || event.socialMediaOrWebsite || "";
   return (
     <div className="mhw-modal-backdrop" onMouseDown={onClose} role="presentation">
       <section
@@ -120,14 +143,38 @@ export function BookingDetailModal({
         role="dialog"
       >
         <div className="mhw-modal-header">
-          <div>
-            <p className="mhw-kicker">Booking Details</p>
-            <h2 id="booking-detail-title">{event.title}</h2>
-            <div className="mhw-modal-meta-row">
-              <span>{getEventDateLabel(event)}</span>
-              <span>{event.time}</span>
-              <span>{getTimezoneLabel(event.hotelTimezone)}</span>
-              <span>{event.venue}</span>
+          <div className="mhw-modal-header-content">
+            {event.headshot ? (
+              <a
+                aria-label={`Download ${event.performer || "performer"} headshot`}
+                className="mhw-modal-header-headshot is-clickable"
+                download
+                href={event.headshot}
+                rel="noreferrer"
+                target="_blank"
+                title="Download performer headshot"
+              >
+                <img alt={`${event.performer || "Performer"} headshot`} src={event.headshot} />
+                <span>Download</span>
+              </a>
+            ) : (
+              <div
+                aria-label="Performer headshot not available"
+                className="mhw-modal-header-headshot"
+                title="Performer headshot not available"
+              >
+                <span className="mhw-modal-user-icon" aria-hidden="true" />
+              </div>
+            )}
+            <div>
+              <p className="mhw-kicker">Booking Details</p>
+              <h2 id="booking-detail-title">{event.title}</h2>
+              <div className="mhw-modal-meta-row">
+                <span>{getEventDateLabel(event)}</span>
+                <span>{event.time}</span>
+                <span>{getTimezoneLabel(event.hotelTimezone)}</span>
+                <span>{event.venue}</span>
+              </div>
             </div>
           </div>
           <button aria-label="Close booking details" onClick={onClose} type="button">
@@ -137,6 +184,10 @@ export function BookingDetailModal({
 
         <div className="mhw-modal-body">
           <section className="mhw-modal-section">
+            <div className="mhw-modal-section-heading">
+              <p className="mhw-kicker">Schedule Details</p>
+              <h3>Performance details</h3>
+            </div>
             <div className="mhw-modal-summary-strip" aria-label="Key booking details">
               {scheduleSummary.map(([label, value]) => (
                 <div key={label}>
@@ -150,7 +201,7 @@ export function BookingDetailModal({
           <section className="mhw-modal-section">
             <div className="mhw-modal-section-heading">
               <p className="mhw-kicker">Performer Details</p>
-              <h3>Entertainment profile</h3>
+              <h3>Performer details</h3>
             </div>
             <div className="mhw-modal-note-panel">
               <span>Performer Bio</span>
@@ -162,7 +213,7 @@ export function BookingDetailModal({
                   <span>{label}</span>
                   {label === "Social Media or Website" && socialHref ? (
                     <a href={socialHref} rel="noreferrer" target="_blank">
-                      {value}
+                      {socialDisplayValue}
                     </a>
                   ) : (
                     <strong>{value}</strong>
@@ -182,26 +233,31 @@ export function BookingDetailModal({
                 )}
               </div>
             ) : null}
-            {hasContent(event.promoVideo) ? (
-              <div className="mhw-modal-video-panel">
-                <span>Promo Video</span>
+            <div className={`mhw-modal-video-panel${hasContent(event.promoVideo) ? "" : " is-empty"}`}>
+              <span>Promo Video</span>
+              {hasContent(event.promoVideo) ? (
                 <video controls preload="metadata" src={event.promoVideo}>
                   Your browser does not support embedded video playback.
                 </video>
-              </div>
-            ) : null}
+              ) : (
+                <div className="mhw-modal-video-empty">
+                  <span aria-hidden="true" className="mhw-modal-video-icon" />
+                  <strong>No promo video available yet.</strong>
+                  <p>A promo video is not available for this performer at this time.</p>
+                </div>
+              )}
+            </div>
           </section>
 
           {planningItems.length > 0 ? (
             <section className="mhw-modal-section mhw-modal-section-muted">
               <div className="mhw-modal-section-heading">
-                <p className="mhw-kicker">Planning Context</p>
-                <h3>Operational details</h3>
+                <p className="mhw-kicker">Schedule Support</p>
+                <h3>Need help with this booking?</h3>
               </div>
               <div className="mhw-modal-info-panel">
                 <p>
-                  For schedule questions or day-of updates, please use the MHW
-                  contact details below.
+                  For schedule questions or day-of updates, use the contact details below.
                 </p>
                 {planningItems.map(([label, value]) => (
                   <div key={label}>
@@ -209,6 +265,28 @@ export function BookingDetailModal({
                     <strong>{value}</strong>
                   </div>
                 ))}
+                {accountManagerContact ? (
+                  <>
+                    <div>
+                      <span>Account Manager Email</span>
+                      <a href={`mailto:${accountManagerContact.email}`}>
+                        {accountManagerContact.email}
+                      </a>
+                    </div>
+                    <div>
+                      <span>Account Manager Phone</span>
+                      <a href={`tel:${accountManagerContact.phone.replace(/[^\d+]/g, "")}`}>
+                        {accountManagerContact.phone}
+                      </a>
+                    </div>
+                  </>
+                ) : null}
+                {hasContent(event.modPhone) ? (
+                  <div>
+                    <span>MOD Phone</span>
+                    <a href={`tel:${event.modPhone?.replace(/[^\d+]/g, "")}`}>{event.modPhone}</a>
+                  </div>
+                ) : null}
               </div>
             </section>
           ) : null}

@@ -31,7 +31,7 @@ function DetailsIcon() {
 
 const filterLabels: Record<HolidayFilter, string> = {
   all: "Key holidays",
-  covered: "Entertainment scheduled",
+  covered: "Covered holidays",
   open: "Open holidays",
 };
 
@@ -229,7 +229,7 @@ export function HomeHolidayCoverage({
         <HolidayMetricButton
           description="Holidays with at least one live entertainment booking"
           filter="covered"
-          label="Entertainment scheduled"
+          label="Covered holidays"
           onClick={(filter) => {
             setExpandedHolidayId(null);
             setActiveFilter(filter);

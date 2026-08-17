@@ -13,6 +13,7 @@ import {
   getClientScheduleValidation,
   type ClientCalendarEvent,
 } from "@/lib/airtable";
+import { getAccountManagerContact } from "@/lib/account-managers";
 import { getClientPortalSession } from "@/lib/auth";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -183,6 +184,7 @@ export default async function Home() {
     .map(({ event }) => event);
   const hotelName = profile.hotelName || calendar.hotelName || "Your property";
   const accountManager = profile.accountManager || "No MHW Account Manager assigned";
+  const accountManagerContact = getAccountManagerContact(profile.accountManager);
 
   return (
     <>
@@ -213,6 +215,16 @@ export default async function Home() {
                 <div>
                   <span>Account manager</span>
                   <strong>{accountManager}</strong>
+                  {accountManagerContact ? (
+                    <p className="mhw-contact-stack">
+                      <a href={`mailto:${accountManagerContact.email}`}>
+                        {accountManagerContact.email}
+                      </a>
+                      <a href={`tel:${accountManagerContact.tel}`}>
+                        {accountManagerContact.phone}
+                      </a>
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <span>This month</span>
@@ -230,6 +242,30 @@ export default async function Home() {
             </aside>
           </div>
         </section>
+
+        {calendar.status === "connected" ? (
+          <HomeBookingsAtGlance
+            bookings={weeklyBookings}
+            weekStart={formatDateForRequest(weekStart)}
+          />
+        ) : (
+          <section className="mhw-shell mhw-bookings" id="bookings">
+            <div className="mhw-section-heading-row">
+              <div>
+                <p className="mhw-kicker">This Week’s Schedule</p>
+                <h2>This week’s schedule</h2>
+              </div>
+              <Link href="/calendar">View full calendar</Link>
+            </div>
+            <div className="mhw-booking-list is-premium">
+              <div className="mhw-booking-empty">
+                <p className="mhw-kicker">Schedule unavailable</p>
+                <h3>We could not load the latest schedule.</h3>
+                <p>Please refresh the page or contact MHW if this continues.</p>
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className="mhw-shell mhw-dashboard" id="dashboard">
           <div className="mhw-section-heading">
@@ -279,27 +315,6 @@ export default async function Home() {
               <p>
                 Please refresh the page or contact MHW if this continues.
               </p>
-            </div>
-          </section>
-        )}
-
-        {calendar.status === "connected" ? (
-          <HomeBookingsAtGlance bookings={weeklyBookings} weekStart={formatDateForRequest(weekStart)} />
-        ) : (
-          <section className="mhw-shell mhw-bookings" id="bookings">
-            <div className="mhw-section-heading-row">
-              <div>
-                <p className="mhw-kicker">This Week’s Schedule</p>
-                <h2>This week’s schedule</h2>
-              </div>
-              <Link href="/calendar">View full calendar</Link>
-            </div>
-            <div className="mhw-booking-list is-premium">
-              <div className="mhw-booking-empty">
-                <p className="mhw-kicker">Schedule unavailable</p>
-                <h3>We could not load the latest schedule.</h3>
-                <p>Please refresh the page or contact MHW if this continues.</p>
-              </div>
             </div>
           </section>
         )}

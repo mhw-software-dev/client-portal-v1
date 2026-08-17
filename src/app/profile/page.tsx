@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { Footer, PortalNav } from "@/components/portal-shell";
 import { getClientProfile } from "@/lib/airtable";
+import { getAccountManagerContact } from "@/lib/account-managers";
 import { getClientPortalSession } from "@/lib/auth";
 
 function DetailItem({ label, value }: { label: string; value?: string }) {
@@ -33,6 +34,7 @@ export default async function ProfilePage() {
 
   const profile = await getClientProfile(session.email);
   const profileEmail = profile.email || session.email;
+  const accountManagerContact = getAccountManagerContact(profile.accountManager);
 
   return (
     <>
@@ -68,6 +70,19 @@ export default async function ProfilePage() {
                       label="Account manager"
                       value={profile.accountManager || "No MHW Account Manager assigned"}
                     />
+                    {accountManagerContact ? (
+                      <div className="mhw-profile-detail">
+                        <span>Account manager contact</span>
+                        <strong className="mhw-profile-contact-links">
+                          <a href={`mailto:${accountManagerContact.email}`}>
+                            {accountManagerContact.email}
+                          </a>
+                          <a href={`tel:${accountManagerContact.tel}`}>
+                            {accountManagerContact.phone}
+                          </a>
+                        </strong>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="mhw-profile-support">

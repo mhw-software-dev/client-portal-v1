@@ -50,7 +50,7 @@ export function HomeScheduleValidation({
         onClick={() => setIsOpen(true)}
         type="button"
       >
-        <p className="mhw-label">Planning status</p>
+        <p className="mhw-label">Schedule validation</p>
         <strong>{value}</strong>
         <span>{note}</span>
         {canOpen ? <DetailsIcon /> : null}
@@ -71,7 +71,7 @@ export function HomeScheduleValidation({
           >
             <div className="mhw-modal-header">
               <div>
-                <p className="mhw-kicker">Planning Status</p>
+                <p className="mhw-kicker">Schedule Validation</p>
                 <h2 id="schedule-validation-title">Remaining year</h2>
                 <p>Review which schedule months are planned from this month through year end.</p>
               </div>
@@ -118,7 +118,7 @@ export function HomeScheduleValidation({
                 </div>
               ) : (
                 <div className="mhw-booking-empty">
-                  <p className="mhw-kicker">Planning Status</p>
+                  <p className="mhw-kicker">Schedule Validation</p>
                   <h3>No schedule month records found.</h3>
                   <p>No validation records are currently listed for the rest of the year.</p>
                 </div>

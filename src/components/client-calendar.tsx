@@ -7,6 +7,7 @@ type CalendarEvent = {
   accountManager?: string;
   additionalPerformanceLinks?: string;
   hasAssignedPerformer?: boolean;
+  headshot?: string;
   id: string;
   date: string;
   displayDate?: string;
@@ -24,6 +25,7 @@ type CalendarEvent = {
   socialMediaOrWebsite?: string;
   status: "Confirmed" | "Pending" | "Scheduled";
   notes: string;
+  outletNumber?: string;
 };
 
 type CalendarDay = {
@@ -196,6 +198,11 @@ function getMonthEventGroups(events: CalendarEvent[]): MonthEventGroup[] {
   }, new Map());
 
   return [...grouped.entries()].map(([time, groupEvents]) => ({ events: groupEvents, time }));
+}
+
+function getOutletNumber(event: CalendarEvent) {
+  const outletMatch = event.outletNumber?.match(/[1-6]/);
+  return outletMatch?.[0] || "default";
 }
 
 function buildCalendarDays(monthDate: Date, hotelTimezone?: string): CalendarDay[] {
@@ -821,6 +828,7 @@ function MonthEventStack({
         return (
           <button
             className="mhw-calendar-event"
+            data-outlet={getOutletNumber(firstEvent)}
             key={group.time}
             onClick={() => {
               if (hasMultipleEvents) {
@@ -831,12 +839,26 @@ function MonthEventStack({
               onSelectEvent(firstEvent);
             }}
             style={getCalendarEventStyle(firstEvent)}
+            title={`${firstEvent.venue} · ${group.time}`}
             type="button"
           >
-            <strong>{group.time}</strong>
+            <span className="mhw-calendar-event-copy">
+              <strong>{firstEvent.venue}</strong>
+              <span className="mhw-calendar-event-time">{group.time}</span>
+            </span>
+            <span className="mhw-calendar-event-media" aria-hidden="true">
+              {firstEvent.headshot ? (
+                <img alt="" src={firstEvent.headshot} />
+              ) : null}
+              {hasMultipleEvents ? (
+                <span className="mhw-calendar-count" aria-label={`${group.events.length} schedules`}>
+                  {group.events.length}
+                </span>
+              ) : null}
+            </span>
             {hasMultipleEvents ? (
-              <span className="mhw-calendar-count" aria-label={`${group.events.length} schedules`}>
-                {group.events.length}
+              <span className="mhw-sr-only">
+                {group.events.length} bookings at {group.time}
               </span>
             ) : null}
           </button>
@@ -917,6 +939,7 @@ function WeekEventBoard({
         return (
           <button
             className="mhw-week-booking"
+            data-outlet={getOutletNumber(firstEvent)}
             key={group.time}
             onClick={() => {
               if (hasMultipleEvents) {

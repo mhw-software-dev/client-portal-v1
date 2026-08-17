@@ -55,7 +55,7 @@ export function HomeOpenScheduleDays({
         onClick={() => setIsOpen(true)}
         type="button"
       >
-        <p className="mhw-label">Available planning days</p>
+        <p className="mhw-label">Open schedule days</p>
         <strong>{value}</strong>
         <span>{note}</span>
         {canOpen ? <DetailsIcon /> : null}
@@ -76,7 +76,7 @@ export function HomeOpenScheduleDays({
           >
             <div className="mhw-modal-header">
               <div>
-                <p className="mhw-kicker">Available Planning Days</p>
+                <p className="mhw-kicker">Open Schedule Days</p>
                 <h2 id="open-schedule-days-title">Next 90 days</h2>
                 <p>Review dates with no client-facing entertainment bookings scheduled.</p>
               </div>
@@ -117,7 +117,7 @@ export function HomeOpenScheduleDays({
                 </div>
               ) : (
                 <div className="mhw-booking-empty">
-                  <p className="mhw-kicker">Available Planning Days</p>
+                  <p className="mhw-kicker">Open Schedule Days</p>
                   <h3>No open days found.</h3>
                   <p>Every day in the next 90 days currently has at least one scheduled booking.</p>
                 </div>

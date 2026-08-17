@@ -7,7 +7,13 @@ type AirtableFieldValue =
   | null
   | undefined
   | { filename?: string; id?: string; name?: string; type?: string; url?: string }
-  | Array<string | null | { filename?: string; id?: string; name?: string; type?: string; url?: string }>;
+  | Array<
+      | string
+      | number
+      | boolean
+      | null
+      | { filename?: string; id?: string; name?: string; type?: string; url?: string }
+    >;
 
 type AirtableRecord = {
   id: string;
@@ -65,11 +71,13 @@ export type ClientCalendarEvent = {
   date: string;
   displayDate: string;
   genres: string;
+  headshot: string;
   hotel: string;
   hotelTimezone: string;
   instrumentation: string;
   modPhone: string;
   notes: string;
+  outletNumber: string;
   performerBio: string;
   performer: string;
   promoVideo: string;
@@ -924,10 +932,12 @@ async function findHolidayGigRecords(gigIds: string[], config: AirtableConfig) {
       "Musicians",
       "Musician Name",
       "Confirmation",
+      "Outlet Number (from Gig Codes)",
       "MHW Account Manager (from Hotels) (from Gig Codes)",
       "MOD Phone",
       "Performer Bio Formula",
       "Genres",
+      "Headshot",
       "Instrumentation",
       "Social Media or Website",
       "Performance or Sample (from Musicians)",
@@ -1053,10 +1063,12 @@ async function findClientGigs(
       "Musicians",
       "Musician Name",
       "Confirmation",
+      "Outlet Number (from Gig Codes)",
       "MHW Account Manager (from Hotels) (from Gig Codes)",
       "MOD Phone",
       "Performer Bio Formula",
       "Genres",
+      "Headshot",
       "Instrumentation",
       "Social Media or Website",
       "Performance or Sample (from Musicians)",
@@ -1151,12 +1163,14 @@ function mapGigRecordToCalendarEvent(
   const venue = stringifyField(record.fields.Venue);
   const performer = stringifyField(record.fields["Musician Name"]);
   const confirmation = stringifyField(record.fields.Confirmation);
+  const outletNumber = stringifyField(record.fields["Outlet Number (from Gig Codes)"]);
   const accountManager = stringifyField(
     record.fields["MHW Account Manager (from Hotels) (from Gig Codes)"],
   );
   const modPhone = stringifyField(record.fields["MOD Phone"]);
   const performerBio = stringifyField(record.fields["Performer Bio Formula"]);
   const genres = stringifyField(record.fields.Genres);
+  const headshot = getFirstAttachmentUrl(record.fields.Headshot);
   const instrumentation = stringifyField(record.fields.Instrumentation);
   const socialMediaOrWebsite = stringifyField(record.fields["Social Media or Website"]);
   const additionalPerformanceLinks = stringifyField(
@@ -1172,11 +1186,13 @@ function mapGigRecordToCalendarEvent(
     date,
     displayDate,
     genres,
+    headshot,
     hotel: hotelName,
     hotelTimezone,
     instrumentation,
     modPhone,
     notes: "",
+    outletNumber,
     performerBio,
     performer,
     promoVideo,
@@ -1236,6 +1252,7 @@ function getFirstLinkedRecordId(value: AirtableFieldValue) {
   const firstValue = value[0];
 
   if (typeof firstValue === "string") return firstValue;
+  if (typeof firstValue === "number" || typeof firstValue === "boolean") return undefined;
   return firstValue?.id;
 }
 
@@ -1246,6 +1263,7 @@ function getLinkedRecordIds(value: AirtableFieldValue) {
     .map((item) => {
       if (!item) return "";
       if (typeof item === "string") return item;
+      if (typeof item === "number" || typeof item === "boolean") return "";
       return item.id || "";
     })
     .filter(Boolean);
@@ -1281,7 +1299,9 @@ function stringifyField(value: AirtableFieldValue): string {
     return value
       .map((item) => {
         if (!item) return "";
-        if (typeof item === "string") return item;
+        if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") {
+          return String(item);
+        }
         return item.name || item.filename || item.url || item.id || "";
       })
       .filter(Boolean)

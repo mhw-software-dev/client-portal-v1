@@ -22,8 +22,10 @@ type SupportRequestConfig = {
   clientNameField: string;
   hotelField: string;
   messageField: string;
+  nameField: string;
   pageUrlField: string;
   pat?: string;
+  requestIdField: string;
   requestTypeField: string;
   signInTokenField: string;
   statusField: string;
@@ -44,8 +46,10 @@ function getSupportRequestConfig(): SupportRequestConfig {
       process.env.AIRTABLE_SUPPORT_CLIENT_NAME_FIELD ?? "Client Contact Name",
     hotelField: process.env.AIRTABLE_SUPPORT_HOTEL_FIELD ?? "Hotel",
     messageField: process.env.AIRTABLE_SUPPORT_MESSAGE_FIELD ?? "Message",
+    nameField: process.env.AIRTABLE_SUPPORT_NAME_FIELD ?? "Name",
     pageUrlField: process.env.AIRTABLE_SUPPORT_PAGE_URL_FIELD ?? "Page URL",
     pat: process.env.AIRTABLE_PAT,
+    requestIdField: process.env.AIRTABLE_SUPPORT_REQUEST_ID_FIELD ?? "Request ID",
     requestTypeField:
       process.env.AIRTABLE_SUPPORT_REQUEST_TYPE_FIELD ?? "Request Type",
     signInTokenField:
@@ -86,45 +90,105 @@ export async function createClientPortalSupportRequest({
   }
 
   const config = getSupportRequestConfig();
-  const submittedAt = new Date().toISOString();
+  const submittedAt = new Date();
+  const requestId = createSupportRequestId(submittedAt);
+  const requestName = `${requestId} - ${input.subject}`.slice(0, 120);
+  const coreFieldNames = new Set([
+    config.messageField,
+    config.requestTypeField,
+    config.statusField,
+    config.subjectField,
+    config.submittedAtField,
+  ]);
   const coreFields: Record<string, unknown> = {
     [config.messageField]: input.message,
     [config.requestTypeField]: input.requestType,
     [config.statusField]: config.statusNew,
     [config.subjectField]: input.subject,
-    [config.submittedAtField]: submittedAt,
+    [config.submittedAtField]: submittedAt.toISOString(),
   };
   const contextFields: Record<string, unknown> = {
     [config.accountManagerField]: session.accountManager,
     [config.clientEmailField]: session.email,
     [config.clientNameField]: session.name,
     [config.hotelField]: session.hotelName,
+    [config.nameField]: requestName,
     [config.pageUrlField]: input.pageUrl,
+    [config.requestIdField]: requestId,
   };
 
   if (session.tokenRecordId) {
     contextFields[config.signInTokenField] = [{ id: session.tokenRecordId }];
   }
 
-  try {
-    return await createSupportRecord({
+  return createSupportRecordWithFieldFallback(
+    {
       ...coreFields,
       ...contextFields,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown Airtable error";
+    },
+    coreFieldNames,
+  );
+}
 
-    if (!message.includes("422")) {
-      throw error;
+function createSupportRequestId(date: Date) {
+  const dateStamp = date.toISOString().slice(0, 10).replaceAll("-", "");
+  const randomSuffix = Math.random().toString(36).slice(2, 8).toUpperCase();
+
+  return `REQ-${dateStamp}-${randomSuffix}`;
+}
+
+async function createSupportRecordWithFieldFallback(
+  fields: Record<string, unknown>,
+  coreFieldNames: Set<string>,
+) {
+  const pendingFields = { ...fields };
+  const removedFields: Array<{ field: string; message: string }> = [];
+  const maxAttempts = Object.keys(pendingFields).length + 1;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      const createdRecord = await createSupportRecord(pendingFields);
+
+      if (removedFields.length > 0) {
+        console.warn("Support request was saved without rejected optional fields.", {
+          removedFields,
+        });
+      }
+
+      return createdRecord;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown Airtable error";
+
+      if (!message.includes("422")) {
+        throw error;
+      }
+
+      const rejectedField = getRejectedSupportField(message, pendingFields);
+
+      if (!rejectedField || coreFieldNames.has(rejectedField)) {
+        throw error;
+      }
+
+      removedFields.push({ field: rejectedField, message });
+      delete pendingFields[rejectedField];
     }
-
-    console.warn(
-      "Support request context fields could not be saved; retrying with core fields only.",
-      { message },
-    );
-
-    return createSupportRecord(coreFields);
   }
+
+  throw new Error("Support request could not be saved after removing rejected fields.");
+}
+
+function getRejectedSupportField(
+  message: string,
+  fields: Record<string, unknown>,
+) {
+  const fieldNames = Object.keys(fields);
+  const quotedField = message.match(/field \"([^\"]+)\"/i)?.[1];
+
+  if (quotedField && quotedField in fields) {
+    return quotedField;
+  }
+
+  return fieldNames.find((fieldName) => message.includes(fieldName));
 }
 
 async function createSupportRecord(fields: Record<string, unknown>) {

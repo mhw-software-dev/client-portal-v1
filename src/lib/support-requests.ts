@@ -118,7 +118,7 @@ export async function createClientPortalSupportRequest({
   };
 
   if (session.tokenRecordId) {
-    contextFields[config.signInTokenField] = [{ id: session.tokenRecordId }];
+    contextFields[config.signInTokenField] = [session.tokenRecordId];
   }
 
   return createSupportRecordWithFieldFallback(

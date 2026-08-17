@@ -8,6 +8,7 @@ import { checkClientPortalAccess, type AuthorizedClientContact } from "@/lib/air
 export type ClientPortalSession = AuthorizedClientContact & {
   expiresAt: string;
   issuedAt: string;
+  tokenRecordId?: string;
 };
 
 const SESSION_COOKIE_NAME = "mhw_client_portal_session";
@@ -95,7 +96,10 @@ function parseSessionValue(value?: string) {
   }
 }
 
-export function createClientPortalSession(contact: AuthorizedClientContact) {
+export function createClientPortalSession(
+  contact: AuthorizedClientContact,
+  options: { tokenRecordId?: string } = {},
+) {
   const issuedAt = new Date();
   const expiresAt = new Date(issuedAt);
   expiresAt.setSeconds(issuedAt.getSeconds() + SESSION_TTL_SECONDS);
@@ -104,11 +108,15 @@ export function createClientPortalSession(contact: AuthorizedClientContact) {
     ...contact,
     expiresAt: expiresAt.toISOString(),
     issuedAt: issuedAt.toISOString(),
+    ...(options.tokenRecordId ? { tokenRecordId: options.tokenRecordId } : {}),
   } satisfies ClientPortalSession;
 }
 
-export async function setClientPortalSession(contact: AuthorizedClientContact) {
-  const session = createClientPortalSession(contact);
+export async function setClientPortalSession(
+  contact: AuthorizedClientContact,
+  options: { tokenRecordId?: string } = {},
+) {
+  const session = createClientPortalSession(contact, options);
   const cookieStore = await cookies();
 
   cookieStore.set(SESSION_COOKIE_NAME, createSessionValue(session), {

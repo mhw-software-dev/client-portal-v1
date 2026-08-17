@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { SupportWidget } from "@/components/support-widget";
+
 const navItems = [
   ["Home", "/"],
   ["Calendar", "/calendar"],
@@ -154,6 +156,7 @@ export function Footer() {
       <div className="mhw-footer-bottom">
         <p>© 2026 MHW Live Music, Inc. | 520 Brickell Key Drive Office 305 | Miami, Florida</p>
       </div>
+      <SupportWidget />
     </footer>
   );
 }

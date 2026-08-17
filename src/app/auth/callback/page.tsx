@@ -69,7 +69,9 @@ async function completeClientPortalSignIn(formData: FormData) {
 
   try {
     await markClientPortalSignInTokenUsed(validation.token.id);
-    await setClientPortalSession(accessCheck.contact);
+    await setClientPortalSession(accessCheck.contact, {
+      tokenRecordId: validation.token.id,
+    });
   } catch (error) {
     console.error("Client portal sign-in completion failed", {
       message: error instanceof Error ? error.message : "Unknown error",

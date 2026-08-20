@@ -3474,6 +3474,13 @@ img {
   resize: vertical;
 }
 
+.mhw-support-form input::placeholder,
+.mhw-support-form textarea::placeholder {
+  -webkit-text-fill-color: rgba(30, 43, 59, 0.42);
+  color: rgba(30, 43, 59, 0.42);
+  font-weight: 600;
+}
+
 .mhw-support-form input:focus,
 .mhw-support-form select:focus,
 .mhw-support-form textarea:focus {

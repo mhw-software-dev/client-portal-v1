@@ -70,7 +70,7 @@ export function SupportWidget() {
       }
 
       setStatus("success");
-      setStatusMessage("Thanks. Your request has been sent to MHW.");
+      setStatusMessage("Thanks. Your request has been shared with your assigned MHW account manager.");
       setMessage("");
       setSubject("");
       setRequestType(requestTypes[0]);
@@ -146,7 +146,7 @@ export function SupportWidget() {
                 <input
                   maxLength={160}
                   onChange={(event) => setSubject(event.target.value)}
-                  placeholder="Short summary"
+                  placeholder="Briefly describe what you need"
                   required
                   type="text"
                   value={subject}
@@ -159,7 +159,7 @@ export function SupportWidget() {
                   maxLength={2000}
                   minLength={10}
                   onChange={(event) => setMessage(event.target.value)}
-                  placeholder="Share the details MHW should know."
+                  placeholder="Add helpful details here"
                   required
                   rows={5}
                   value={message}

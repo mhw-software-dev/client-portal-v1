@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ClientPortalSession } from "@/lib/auth";
+import { getAccountManagerContact } from "@/lib/account-managers";
 
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
 
@@ -16,6 +17,7 @@ type AirtableCreateResponse = {
 };
 
 type SupportRequestConfig = {
+  accountManagerEmailField: string;
   accountManagerField: string;
   baseId?: string;
   clientEmailField: string;
@@ -37,6 +39,9 @@ type SupportRequestConfig = {
 
 function getSupportRequestConfig(): SupportRequestConfig {
   return {
+    accountManagerEmailField:
+      process.env.AIRTABLE_SUPPORT_ACCOUNT_MANAGER_EMAIL_FIELD ??
+      "Account Manager Email",
     accountManagerField:
       process.env.AIRTABLE_SUPPORT_ACCOUNT_MANAGER_FIELD ?? "Account Manager",
     baseId: process.env.AIRTABLE_AUTH_BASE_ID,
@@ -93,6 +98,7 @@ export async function createClientPortalSupportRequest({
   const submittedAt = new Date();
   const requestId = createSupportRequestId(submittedAt);
   const requestName = `${requestId} - ${input.subject}`.slice(0, 120);
+  const accountManagerContact = getAccountManagerContact(session.accountManager);
   const coreFieldNames = new Set([
     config.messageField,
     config.requestTypeField,
@@ -109,6 +115,7 @@ export async function createClientPortalSupportRequest({
   };
   const contextFields: Record<string, unknown> = {
     [config.accountManagerField]: session.accountManager,
+    [config.accountManagerEmailField]: accountManagerContact?.email ?? "",
     [config.clientEmailField]: session.email,
     [config.clientNameField]: session.name,
     [config.hotelField]: session.hotelName,

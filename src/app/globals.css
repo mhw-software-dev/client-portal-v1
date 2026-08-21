@@ -553,52 +553,25 @@ img {
 }
 
 .mhw-profile-hero {
-  padding: clamp(3rem, 7vw, 5.5rem) 0 clamp(3rem, 7vw, 5rem);
+  padding: clamp(1.75rem, 5vw, 3.25rem) 0 clamp(3rem, 7vw, 5rem);
 }
 
 .mhw-profile-grid {
   align-items: start;
   display: grid;
-  gap: clamp(1.5rem, 4vw, 2.5rem);
-  grid-template-columns: minmax(0, 54rem);
+  grid-template-columns: minmax(0, 58rem);
   justify-content: center;
-}
-
-.mhw-profile-copy {
-  border-top: 2px solid var(--mhw-gold);
-  display: grid;
-  gap: 1.2rem;
-  justify-items: center;
-  margin: 0 auto;
-  max-width: 46rem;
-  padding-top: 1.5rem;
-  text-align: center;
-  width: 100%;
-}
-
-.mhw-profile-copy h1 {
-  color: var(--mhw-navy);
-  font-size: clamp(2.5rem, 5vw, 4.75rem);
-  font-weight: 900;
-  line-height: 0.98;
-}
-
-.mhw-profile-copy p:not(.mhw-kicker) {
-  color: var(--mhw-dark-grey);
-  font-size: clamp(1rem, 2vw, 1.12rem);
-  line-height: 1.7;
-  max-width: 40rem;
 }
 
 .mhw-profile-card {
   background: var(--mhw-white);
   border: 1px solid rgb(12 50 101 / 0.1);
-  border-radius: 1.35rem;
-  box-shadow: var(--mhw-shadow);
+  border-radius: 1.45rem;
+  box-shadow: 0 1.5rem 4rem rgb(12 50 101 / 0.14);
   display: grid;
   gap: clamp(1.15rem, 3vw, 1.7rem);
   margin: 0 auto;
-  max-width: 54rem;
+  max-width: 58rem;
   overflow: hidden;
   padding: 0;
   width: 100%;
@@ -667,7 +640,7 @@ img {
 .mhw-profile-details {
   display: grid;
   gap: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 0 clamp(1.35rem, 4vw, 2rem);
 }
 
@@ -680,12 +653,8 @@ img {
   padding: 1.15rem;
 }
 
-.mhw-profile-detail:nth-child(even) {
+.mhw-profile-detail:nth-child(n + 2) {
   border-left: 0;
-}
-
-.mhw-profile-detail:nth-child(n + 3) {
-  border-top: 0;
 }
 
 .mhw-profile-detail span {
@@ -2663,11 +2632,8 @@ img {
     grid-template-columns: 1fr;
   }
 
-  .mhw-profile-detail:nth-child(even) {
-    border-left: 1px solid var(--mhw-light-grey);
-  }
-
   .mhw-profile-detail:nth-child(n + 2) {
+    border-left: 1px solid var(--mhw-light-grey);
     border-top: 0;
   }
 

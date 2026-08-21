@@ -62,15 +62,6 @@ export default async function ProfilePage() {
       <main>
         <section className="mhw-profile-hero">
           <div className="mhw-shell mhw-profile-grid">
-            <div className="mhw-profile-copy">
-              <p className="mhw-kicker">Account Settings</p>
-              <h1>Your portal access details.</h1>
-              <p>
-                Review the contact and property details connected to your MHW
-                Client Portal access.
-              </p>
-            </div>
-
             <section className="mhw-profile-card" aria-label="Client profile details">
               {profile.status === "connected" ? (
                 <>

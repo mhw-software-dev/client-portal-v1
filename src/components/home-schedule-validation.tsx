@@ -22,6 +22,66 @@ type HomeScheduleValidationProps = {
   value: string;
 };
 
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function getMonthIndex(month: string) {
+  const trimmedMonth = month.trim();
+  const monthNumber = Number(trimmedMonth);
+
+  if (monthNumber >= 1 && monthNumber <= 12) return monthNumber - 1;
+
+  return monthNames.findIndex(
+    (monthName) => monthName.toLowerCase() === trimmedMonth.toLowerCase(),
+  );
+}
+
+function getScheduleYear(records: ClientScheduleValidationRecord[]) {
+  const recordYear = records.find((record) => /^\d{4}$/.test(record.year.trim()))?.year;
+
+  return recordYear || String(new Date().getFullYear());
+}
+
+function getClientStatus(status?: string) {
+  return status === "Schedule Validated" ? "Confirmed" : "Not confirmed yet";
+}
+
+function buildScheduleMonths(records: ClientScheduleValidationRecord[]) {
+  const year = getScheduleYear(records);
+  const recordsByMonth = new Map<number, ClientScheduleValidationRecord>();
+
+  records.forEach((record) => {
+    const monthIndex = getMonthIndex(record.month);
+    if (monthIndex >= 0 && !recordsByMonth.has(monthIndex)) {
+      recordsByMonth.set(monthIndex, record);
+    }
+  });
+
+  return monthNames.map((month, index) => {
+    const record = recordsByMonth.get(index);
+
+    return {
+      id: record?.id || `${year}-${index + 1}`,
+      month,
+      number: index + 1,
+      status: getClientStatus(record?.status),
+      year: record?.year || year,
+    };
+  });
+}
+
 export function HomeScheduleValidation({
   note,
   records,
@@ -30,6 +90,7 @@ export function HomeScheduleValidation({
 }: HomeScheduleValidationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const canOpen = status === "connected";
+  const scheduleMonths = buildScheduleMonths(records);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -50,7 +111,7 @@ export function HomeScheduleValidation({
         onClick={() => setIsOpen(true)}
         type="button"
       >
-        <p className="mhw-label">Schedule validation</p>
+        <p className="mhw-label">Schedule progress</p>
         <strong>{value}</strong>
         <span>{note}</span>
         {canOpen ? <DetailsIcon /> : null}
@@ -71,12 +132,12 @@ export function HomeScheduleValidation({
           >
             <div className="mhw-modal-header">
               <div>
-                <p className="mhw-kicker">Schedule Validation</p>
-                <h2 id="schedule-validation-title">Remaining year</h2>
-                <p>Review which schedule months are planned from this month through year end.</p>
+                <p className="mhw-kicker">Schedule Progress</p>
+                <h2 id="schedule-validation-title">Full year overview</h2>
+                <p>Review which months are confirmed as the year moves forward.</p>
               </div>
               <button
-                aria-label="Close schedule validation"
+                aria-label="Close schedule progress"
                 onClick={() => setIsOpen(false)}
                 type="button"
               >
@@ -85,30 +146,30 @@ export function HomeScheduleValidation({
             </div>
 
             <div className="mhw-modal-body">
-              {records.length > 0 ? (
+              {canOpen ? (
                 <div className="mhw-validation-table-wrap">
                   <table className="mhw-validation-table">
                     <thead>
                       <tr>
+                        <th>#</th>
                         <th>Month</th>
-                        <th>Year</th>
                         <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {records.map((record) => (
-                        <tr key={record.id}>
-                          <td>{record.month}</td>
-                          <td>{record.year}</td>
+                      {scheduleMonths.map((month) => (
+                        <tr key={month.id}>
+                          <td>{month.number}</td>
+                          <td>{month.month}</td>
                           <td>
                             <span
                               className={
-                                record.status === "Schedule Validated"
+                                month.status === "Confirmed"
                                   ? "mhw-validation-status is-validated"
                                   : "mhw-validation-status"
                               }
                             >
-                              {record.status}
+                              {month.status}
                             </span>
                           </td>
                         </tr>
@@ -118,9 +179,9 @@ export function HomeScheduleValidation({
                 </div>
               ) : (
                 <div className="mhw-booking-empty">
-                  <p className="mhw-kicker">Schedule Validation</p>
-                  <h3>No schedule month records found.</h3>
-                  <p>No validation records are currently listed for the rest of the year.</p>
+                  <p className="mhw-kicker">Schedule Progress</p>
+                  <h3>Schedule progress is not available right now.</h3>
+                  <p>Please contact MHW if you need the latest schedule status.</p>
                 </div>
               )}
             </div>

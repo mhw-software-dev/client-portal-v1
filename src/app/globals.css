@@ -559,8 +559,30 @@ img {
 .mhw-profile-grid {
   align-items: start;
   display: grid;
+  gap: clamp(1.1rem, 3vw, 1.6rem);
   grid-template-columns: minmax(0, 58rem);
   justify-content: center;
+}
+
+.mhw-profile-page-header {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.mhw-profile-page-header h1 {
+  color: var(--mhw-navy);
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.mhw-profile-page-header p:not(.mhw-kicker) {
+  color: var(--mhw-dark-grey);
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 38rem;
 }
 
 .mhw-profile-card {
@@ -580,13 +602,14 @@ img {
 .mhw-profile-card-header {
   align-items: center;
   background:
+    radial-gradient(circle at 88% 12%, rgb(213 164 0 / 0.18), transparent 28%),
     linear-gradient(135deg, rgb(12 50 101 / 0.98), rgb(12 50 101 / 0.9)),
     var(--mhw-navy);
   border-bottom: 4px solid var(--mhw-green);
   display: grid;
-  gap: 1rem;
+  gap: clamp(1rem, 3vw, 1.5rem);
   grid-template-columns: auto minmax(0, 1fr);
-  padding: clamp(1.35rem, 4vw, 2rem);
+  padding: clamp(1.65rem, 4vw, 2.35rem);
 }
 
 .mhw-profile-avatar {
@@ -598,11 +621,11 @@ img {
   border-radius: 999px;
   color: var(--mhw-white);
   display: inline-flex;
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 900;
-  height: 4.25rem;
+  height: 5rem;
   justify-content: center;
-  width: 4.25rem;
+  width: 5rem;
 }
 
 .mhw-profile-heading {
@@ -639,22 +662,51 @@ img {
 
 .mhw-profile-details {
   display: grid;
-  gap: 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 0 clamp(1.35rem, 4vw, 2rem);
 }
 
 .mhw-profile-detail {
-  background: linear-gradient(180deg, var(--mhw-white), rgb(246 248 249 / 0.72));
-  border: 1px solid var(--mhw-light-grey);
-  display: grid;
-  gap: 0.35rem;
-  min-height: 7rem;
+  align-items: start;
+  background:
+    linear-gradient(180deg, var(--mhw-white), rgb(246 248 249 / 0.74));
+  border: 1px solid rgb(12 50 101 / 0.09);
+  border-radius: 1rem;
+  display: flex;
+  gap: 0.85rem;
+  min-height: 8rem;
   padding: 1.15rem;
 }
 
-.mhw-profile-detail:nth-child(n + 2) {
-  border-left: 0;
+.mhw-profile-detail > div {
+  min-width: 0;
+}
+
+.mhw-profile-detail-icon {
+  align-items: center;
+  background: rgb(0 149 64 / 0.1);
+  border: 1px solid rgb(0 149 64 / 0.16);
+  border-radius: 999px;
+  color: var(--mhw-green);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 2.35rem;
+  justify-content: center;
+  width: 2.35rem;
+}
+
+.mhw-profile-detail-icon svg {
+  height: 1.15rem;
+  width: 1.15rem;
+}
+
+.mhw-profile-detail-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .mhw-profile-detail span {
@@ -667,14 +719,46 @@ img {
 
 .mhw-profile-detail strong {
   color: var(--mhw-navy);
+  display: block;
   font-size: 1rem;
   line-height: 1.45;
+  margin-top: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.mhw-profile-detail-contact {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgb(12 50 101 / 0.04), rgb(0 149 64 / 0.07)),
+    var(--mhw-white);
+  grid-column: 1 / -1;
+  min-height: auto;
 }
 
 .mhw-profile-contact-links {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.55rem;
   overflow-wrap: anywhere;
+}
+
+.mhw-profile-contact-links a {
+  align-items: center;
+  background: rgb(255 255 255 / 0.74);
+  border: 1px solid rgb(12 50 101 / 0.09);
+  border-radius: 999px;
+  color: var(--mhw-navy);
+  display: inline-flex;
+  justify-self: start;
+  min-width: 0;
+  padding: 0.45rem 0.75rem;
+  text-decoration: none;
+}
+
+.mhw-profile-contact-links a:hover,
+.mhw-profile-contact-links a:focus-visible {
+  border-color: rgb(0 149 64 / 0.26);
+  color: var(--mhw-green);
+  text-decoration: none;
 }
 
 .mhw-profile-empty {
@@ -686,12 +770,13 @@ img {
 
 .mhw-profile-support {
   align-items: center;
-  background: rgb(246 248 249 / 0.82);
+  background:
+    linear-gradient(135deg, rgb(246 248 249 / 0.92), rgb(255 255 255 / 0.98));
   border-top: 1px solid var(--mhw-light-grey);
   display: flex;
   gap: 1rem;
   justify-content: space-between;
-  padding: 1rem clamp(1.35rem, 4vw, 2rem) clamp(1.35rem, 4vw, 1.75rem);
+  padding: 1.15rem clamp(1.35rem, 4vw, 2rem) clamp(1.35rem, 4vw, 1.85rem);
 }
 
 .mhw-profile-support p {
@@ -1225,9 +1310,51 @@ img {
 .mhw-calendar-toolbar {
   align-items: center;
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
   justify-content: space-between;
   margin-bottom: 1.25rem;
+}
+
+.mhw-calendar-view-controls {
+  align-items: center;
+  background: rgb(255 255 255 / 0.86);
+  border: 1px solid rgb(12 50 101 / 0.1);
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 34px rgb(12 50 101 / 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1rem;
+  padding: 0.85rem 1rem;
+}
+
+.mhw-calendar-view-label {
+  color: var(--mhw-navy);
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1.2;
+  padding-right: 0.25rem;
+  white-space: nowrap;
+}
+
+.mhw-calendar-view-switches {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.mhw-calendar-control-group {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.mhw-calendar-control-group > span {
+  color: rgb(12 50 101 / 0.58);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  padding-left: 0.35rem;
+  text-transform: uppercase;
 }
 
 .mhw-segmented-control,
@@ -1259,23 +1386,48 @@ img {
 }
 
 .mhw-segmented-control {
-  background: rgb(255 255 255 / 0.82);
+  background: rgb(246 248 249 / 0.92);
   border: 1px solid rgb(12 50 101 / 0.12);
   border-radius: 999px;
-  box-shadow: 0 12px 28px rgb(12 50 101 / 0.08);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.72);
   padding: 0.25rem;
 }
 
 .mhw-segmented-control button {
+  align-items: center;
   border-color: transparent;
+  color: rgb(12 50 101 / 0.78);
+  display: inline-flex;
+  gap: 0.45rem;
+  justify-content: center;
   min-height: 2rem;
   padding: 0.45rem 0.85rem;
+  position: relative;
+}
+
+.mhw-segmented-control button::after {
+  background: transparent;
+  border: 1px solid rgb(12 50 101 / 0.24);
+  border-radius: 999px;
+  content: "";
+  height: 0.46rem;
+  width: 0.46rem;
+}
+
+.mhw-segmented-control button:not(.is-active)::after {
+  opacity: 0.7;
 }
 
 .mhw-segmented-control button.is-active {
   background: var(--mhw-navy);
   box-shadow: 0 10px 22px rgb(12 50 101 / 0.22);
   color: var(--mhw-white);
+}
+
+.mhw-segmented-control button.is-active::after {
+  background: var(--mhw-white);
+  border-color: rgb(255 255 255 / 0.88);
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 0.16);
 }
 
 .mhw-calendar-actions button:hover,
@@ -2420,6 +2572,16 @@ img {
   overflow-wrap: anywhere;
 }
 
+.mhw-modal-detail-card.is-empty strong {
+  color: rgb(12 50 101 / 0.62);
+  font-weight: 800;
+}
+
+.mhw-modal-link-list {
+  display: grid;
+  gap: 0.4rem;
+}
+
 .mhw-modal-detail-card a,
 .mhw-modal-media-link a {
   color: var(--mhw-navy);
@@ -2593,6 +2755,20 @@ img {
     flex-direction: column;
   }
 
+  .mhw-calendar-view-controls {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .mhw-calendar-view-switches {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .mhw-calendar-control-group {
+    flex: 1 1 13rem;
+  }
+
   .mhw-calendar-day {
     min-height: 8.75rem;
   }
@@ -2629,12 +2805,11 @@ img {
   }
 
   .mhw-profile-details {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .mhw-profile-detail:nth-child(n + 2) {
-    border-left: 1px solid var(--mhw-light-grey);
-    border-top: 0;
+  .mhw-profile-detail {
+    min-height: 7.25rem;
   }
 
   .mhw-profile-support {
@@ -2663,9 +2838,45 @@ img {
     flex: 1 1 calc(50% - 0.5rem);
   }
 
+  .mhw-profile-hero {
+    padding-top: 1.35rem;
+  }
+
+  .mhw-profile-page-header {
+    justify-items: start;
+    text-align: left;
+  }
+
   .mhw-profile-card-header {
     align-items: flex-start;
     grid-template-columns: 1fr;
+    padding: 1.35rem;
+  }
+
+  .mhw-profile-avatar {
+    font-size: 1.65rem;
+    height: 4.1rem;
+    width: 4.1rem;
+  }
+
+  .mhw-profile-details {
+    gap: 0.75rem;
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+
+  .mhw-profile-detail {
+    min-height: auto;
+    padding: 1rem;
+  }
+
+  .mhw-profile-detail-contact {
+    align-items: flex-start;
+  }
+
+  .mhw-profile-contact-links a {
+    border-radius: 0.85rem;
+    justify-self: stretch;
   }
 
   .mhw-section-heading-row,
@@ -2705,7 +2916,19 @@ img {
   }
 
   .mhw-calendar-actions,
+  .mhw-calendar-control-group,
+  .mhw-calendar-view-controls,
+  .mhw-calendar-view-switches,
   .mhw-segmented-control {
+    width: 100%;
+  }
+
+  .mhw-calendar-view-controls {
+    border-radius: 1rem;
+    padding: 0.9rem;
+  }
+
+  .mhw-calendar-view-label {
     width: 100%;
   }
 

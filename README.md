@@ -11,7 +11,7 @@ Status: active Client Portal proof of concept with session-based magic-link auth
 Built so far:
 - Separate Git repo: `mhw-software-dev/client-portal-v1`
 - Branded MHW Client Portal shell, nav, footer, Home, Calendar, and Profile pages
-- Airtable read-only schedule, profile, holiday coverage, and schedule validation data
+- Airtable read-only schedule, profile, holiday coverage, and schedule progress data
 - Separate Airtable auth/token base for magic-link sign-in records
 - Resend-powered magic-link email delivery
 - Signed session cookie authentication

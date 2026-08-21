@@ -55,7 +55,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           <ul>
             <li>Review upcoming entertainment bookings.</li>
             <li>Open detailed performer and schedule information.</li>
-            <li>Track holiday coverage and schedule validation.</li>
+            <li>Track holiday coverage and schedule progress.</li>
           </ul>
           <p>
             Access is managed by MHW. No public signup is needed for this portal.

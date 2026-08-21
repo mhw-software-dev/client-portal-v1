@@ -6,7 +6,7 @@ Use this SOP to manage who can access the MHW Client Portal and what schedule in
 
 ## Primary Systems
 
-- Airtable: source of client contacts, hotels, gigs, holiday coverage, and schedule validation.
+- Airtable: source of client contacts, hotels, gigs, holiday coverage, and schedule progress.
 - Resend: sends secure sign-in links.
 - Vercel: hosts the portal.
 - GitHub: stores the portal codebase.
@@ -40,12 +40,12 @@ The contact must also have a valid email address.
 Clients only see booking data connected to their property. The portal currently shows:
 
 - This week's entertainment
-- Full calendar by month, week, and list
+- Full calendar with month/week range options and calendar/list format options
 - Booking details
 - Performer details
 - Holiday coverage
-- Schedule validation
-- Open schedule days
+- Schedule progress
+- This month and next month's entertainment
 - Client profile/contact information
 
 ## Key Airtable Data Sources
@@ -54,7 +54,7 @@ Clients only see booking data connected to their property. The portal currently 
 - Hotels: property information, timezone, and account manager details.
 - Gigs: client-facing entertainment schedule.
 - Holiday-Hotel: holiday coverage per property.
-- Steady Schedules by Month: schedule validation status.
+- Steady Schedules by Month: schedule progress status.
 - Client Portal Sign In Tokens: secure sign-in token records.
 
 ## Important Notes
@@ -63,4 +63,3 @@ Clients only see booking data connected to their property. The portal currently 
 - The portal should remain read-only for clients.
 - If a client cannot sign in, first confirm their email exists in Hotel Contacts and meets the access rules above.
 - If a client sees the wrong property, check the Hotel Contacts to Hotels relationship.
-

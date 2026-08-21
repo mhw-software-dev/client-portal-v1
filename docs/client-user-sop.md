@@ -22,8 +22,8 @@ The Home page gives a quick view of the property's entertainment status.
 Clients can review:
 
 - This week's entertainment
-- Schedule validation
-- Open schedule days
+- This month and next month's entertainment
+- Schedule progress
 - Holiday coverage
 - Upcoming booking highlights
 
@@ -37,10 +37,14 @@ Clients can review:
 
 The Calendar page shows the full entertainment schedule.
 
-Available views:
+Available range options:
 
 - Month
 - Week
+
+Available format options:
+
+- Calendar
 - List
 
 Clients can:
@@ -60,6 +64,8 @@ Booking details may include:
 - Performer
 - Performer bio
 - Performer headshot
+- Social media link, when available
+- Website link, when available
 - Promo video, when available
 - MHW contact information
 
@@ -76,4 +82,3 @@ The Profile page shows the client's portal contact information:
 ## Need Help
 
 If information looks incorrect or needs to be updated, contact MHW.
-

@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { Footer, PortalNav } from "@/components/portal-shell";
 import { HomeBookingsAtGlance } from "@/components/home-bookings-at-glance";
 import { HomeHolidayCoverage } from "@/components/home-holiday-coverage";
-import { HomeOpenScheduleDays } from "@/components/home-open-schedule-days";
 import { HomeScheduleValidation } from "@/components/home-schedule-validation";
 import {
   getClientCalendarEvents,
@@ -20,16 +19,6 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   month: "short",
   weekday: "short",
-});
-
-const openDateFormatter = new Intl.DateTimeFormat("en-US", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
-
-const weekdayFormatter = new Intl.DateTimeFormat("en-US", {
-  weekday: "long",
 });
 
 function getEventDate(event: ClientCalendarEvent) {
@@ -109,25 +98,24 @@ export default async function Home() {
   const email = session.email;
   const today = new Date();
   const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const currentYearStart = new Date(todayOnly.getFullYear(), 0, 1);
   const currentMonthStart = new Date(todayOnly.getFullYear(), todayOnly.getMonth(), 1);
+  const nextMonthStart = new Date(todayOnly.getFullYear(), todayOnly.getMonth() + 1, 1);
   const weekStart = getWeekStart(todayOnly);
   const weekEndExclusive = getWeekEndExclusive(weekStart);
-  const next90Days = new Date(todayOnly);
-  next90Days.setDate(todayOnly.getDate() + 90);
-  const dashboardEndDate = new Date(next90Days);
-  dashboardEndDate.setDate(next90Days.getDate() + 1);
+  const nextMonthEnd = new Date(todayOnly.getFullYear(), todayOnly.getMonth() + 2, 1);
   const dashboardStartDate =
     weekStart < currentMonthStart ? weekStart : currentMonthStart;
   const holidayYear = todayOnly.getFullYear();
   const nextYearStart = new Date(todayOnly.getFullYear() + 1, 0, 1);
   const validationDateRange = {
     endDate: formatDateForRequest(nextYearStart),
-    startDate: formatDateForRequest(currentMonthStart),
+    startDate: formatDateForRequest(currentYearStart),
   };
   const [profile, calendar, holidayCoverage, scheduleValidation] = await Promise.all([
     getClientProfile(email),
     getClientCalendarEvents(email, {
-      endDate: formatDateForRequest(dashboardEndDate),
+      endDate: formatDateForRequest(nextMonthEnd),
       startDate: formatDateForRequest(dashboardStartDate),
     }),
     getClientHolidayCoverage(email, holidayYear),
@@ -144,37 +132,23 @@ export default async function Home() {
   const thisMonthCount = validEvents.filter(({ eventDate }) =>
     isSameMonth(eventDate, todayOnly),
   ).length;
-  const scheduledDayKeys = new Set(
-    upcomingEvents
-      .filter(({ eventDate }) => eventDate < dashboardEndDate)
-      .map(({ eventDate }) => formatDateForRequest(eventDate)),
-  );
-  const openScheduleDays = Array.from({ length: 90 }, (_, index) => {
-    const openDate = new Date(todayOnly);
-    openDate.setDate(todayOnly.getDate() + index);
-
-    return openDate;
-  })
-    .filter((openDate) => !scheduledDayKeys.has(formatDateForRequest(openDate)))
-    .map((openDate) => ({
-      date: openDateFormatter.format(openDate),
-      day: weekdayFormatter.format(openDate),
-      id: formatDateForRequest(openDate),
-      status: "Open",
-    }));
-  const openDaysCount = openScheduleDays.length;
+  const nextMonthCount = validEvents
+    .filter(({ eventDate }) => isSameMonth(eventDate, nextMonthStart))
+    .length;
+  const confirmedScheduleMonths = Math.min(scheduleValidation.validatedCount, 12);
+  const remainingScheduleMonths = Math.max(0, 12 - confirmedScheduleMonths);
   const validationValue =
     scheduleValidation.status === "connected"
-      ? `${scheduleValidation.validatedCount} of ${scheduleValidation.totalCount}`
+      ? `${confirmedScheduleMonths} of 12 months`
       : "N/A";
   const validationNote =
     scheduleValidation.status === "connected"
-      ? scheduleValidation.openCount > 0
-        ? `${scheduleValidation.openCount} schedule month${
-            scheduleValidation.openCount === 1 ? "" : "s"
-          } still pending review`
-        : "Schedule months are planned for the rest of the year"
-      : "Schedule validation details are not available right now";
+      ? remainingScheduleMonths > 0
+        ? `${remainingScheduleMonths} month${
+            remainingScheduleMonths === 1 ? "" : "s"
+          } remaining this year`
+        : "All months are confirmed for this year"
+      : "Schedule progress is not available right now";
   const nextEvent = upcomingEvents[0];
   const weeklyBookings = validEvents
     .filter(
@@ -280,20 +254,19 @@ export default async function Home() {
           <div className="mhw-stat-grid">
             <StatCard
               label="This month’s entertainment"
-              note="Scheduled live entertainment bookings"
+              note="Scheduled entertainment bookings for this month"
               value={String(thisMonthCount)}
+            />
+            <StatCard
+              label="Next month’s entertainment"
+              note="Scheduled entertainment bookings for next month"
+              value={String(nextMonthCount)}
             />
             <HomeScheduleValidation
               note={validationNote}
               records={scheduleValidation.records}
               status={scheduleValidation.status}
               value={validationValue}
-            />
-            <HomeOpenScheduleDays
-              note="Dates still open for entertainment planning"
-              openDays={openScheduleDays}
-              status={calendar.status}
-              value={String(openDaysCount)}
             />
           </div>
         </section>

@@ -5,22 +5,77 @@ import { getClientProfile } from "@/lib/airtable";
 import { getAccountManagerContact } from "@/lib/account-managers";
 import { getClientPortalSession } from "@/lib/auth";
 
-function DetailItem({ label, value }: { label: string; value?: string }) {
+type ProfileIconName = "email" | "hotel" | "manager" | "phone";
+
+function ProfileIcon({ name }: { name: ProfileIconName }) {
+  const paths: Record<ProfileIconName, string[]> = {
+    email: [
+      "M4 6.5h16v11H4z",
+      "m4.5 7 7.5 6 7.5-6",
+    ],
+    hotel: [
+      "M5 19V6.5L12 4l7 2.5V19",
+      "M9 19v-5h6v5",
+      "M9 9h.01M12 9h.01M15 9h.01M9 12h.01M12 12h.01M15 12h.01",
+    ],
+    manager: [
+      "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
+      "M5 20a7 7 0 0 1 14 0",
+    ],
+    phone: [
+      "M7 5h3l1.2 3-2 1.3a11 11 0 0 0 5.5 5.5l1.3-2L19 14v3a2 2 0 0 1-2.2 2 14 14 0 0 1-11.8-11.8A2 2 0 0 1 7 5Z",
+    ],
+  };
+
+  return (
+    <span className="mhw-profile-detail-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        {paths[name].map((path) => (
+          <path d={path} key={path} />
+        ))}
+      </svg>
+    </span>
+  );
+}
+
+function DetailItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: ProfileIconName;
+  label: string;
+  value?: string;
+}) {
   if (!value?.trim()) return null;
 
   return (
     <div className="mhw-profile-detail">
-      <span>{label}</span>
-      <strong>{value}</strong>
+      <ProfileIcon name={icon} />
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
     </div>
   );
 }
 
-function RequiredDetailItem({ label, value }: { label: string; value: string }) {
+function RequiredDetailItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: ProfileIconName;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="mhw-profile-detail">
-      <span>{label}</span>
-      <strong>{value}</strong>
+      <ProfileIcon name={icon} />
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
     </div>
   );
 }
@@ -35,12 +90,15 @@ function ContactLinks({
   tel: string;
 }) {
   return (
-    <div className="mhw-profile-detail">
-      <span>Account manager contact</span>
-      <strong className="mhw-profile-contact-links">
-        <a href={`mailto:${email}`}>{email}</a>
-        <a href={`tel:${tel}`}>{phone}</a>
-      </strong>
+    <div className="mhw-profile-detail mhw-profile-detail-contact">
+      <ProfileIcon name="phone" />
+      <div>
+        <span>Account manager contact</span>
+        <strong className="mhw-profile-contact-links">
+          <a href={`mailto:${email}`}>{email}</a>
+          <a href={`tel:${tel}`}>{phone}</a>
+        </strong>
+      </div>
     </div>
   );
 }
@@ -62,6 +120,12 @@ export default async function ProfilePage() {
       <main>
         <section className="mhw-profile-hero">
           <div className="mhw-shell mhw-profile-grid">
+            <header className="mhw-profile-page-header">
+              <p className="mhw-kicker">Account Settings</p>
+              <h1>My Profile</h1>
+              <p>Review the contact details connected to your MHW Client Portal access.</p>
+            </header>
+
             <section className="mhw-profile-card" aria-label="Client profile details">
               {profile.status === "connected" ? (
                 <>
@@ -80,9 +144,10 @@ export default async function ProfilePage() {
                   </div>
 
                   <div className="mhw-profile-details">
-                    <DetailItem label="Email address" value={profileEmail} />
-                    <DetailItem label="Property" value={profile.hotelName} />
+                    <DetailItem icon="email" label="Email address" value={profileEmail} />
+                    <DetailItem icon="hotel" label="Property" value={profile.hotelName} />
                     <RequiredDetailItem
+                      icon="manager"
                       label="Account manager"
                       value={profile.accountManager || "No MHW Account Manager assigned"}
                     />

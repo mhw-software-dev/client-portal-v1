@@ -6,7 +6,7 @@ Use this SOP to understand how the MHW Client Portal is implemented, what system
 
 ## Project Summary
 
-The MHW Client Portal is a custom Next.js application for hotel clients. It lets approved hotel contacts securely sign in and review their property's live entertainment schedule, performer details, holiday coverage, schedule validation, open schedule days, and calendar exports.
+The MHW Client Portal is a custom Next.js application for hotel clients. It lets approved hotel contacts securely sign in and review their property's live entertainment schedule, performer details, holiday coverage, schedule progress, this month and next month's entertainment counts, and calendar exports.
 
 The portal uses Airtable as the backend data source, Resend for sign-in emails, GitHub for source control, and Vercel for hosting.
 
@@ -58,8 +58,7 @@ Production deploys are handled by Vercel from the `main` branch.
 - `src/components/booking-detail-modal.tsx`: Booking details modal.
 - `src/components/home-bookings-at-glance.tsx`: This week's entertainment.
 - `src/components/home-holiday-coverage.tsx`: Holiday coverage cards and modal.
-- `src/components/home-schedule-validation.tsx`: Schedule validation KPI and modal.
-- `src/components/home-open-schedule-days.tsx`: Open schedule days KPI and modal.
+- `src/components/home-schedule-validation.tsx`: Schedule progress KPI and modal backed by Steady Schedules data.
 
 ## Airtable Data Model
 
@@ -141,6 +140,8 @@ The portal excludes gigs where `Gig Codes` matches:
 AIRTABLE_GIGS_EXCLUDED_GIG_CODE=Last Minute Cancellation
 ```
 
+The combined `Social Media or Website` source field is split in the booking details modal for display. Social links and website links appear as separate tiles when available; if neither value exists, the modal shows an empty-state contact tile.
+
 ### Holiday-Hotel
 
 Holiday-Hotel powers the annual holiday coverage section.
@@ -163,7 +164,7 @@ Covered means the holiday has at least one linked gig.
 
 ### Steady Schedules By Month
 
-Steady Schedules by Month powers schedule validation.
+Steady Schedules by Month powers the client-facing schedule progress section.
 
 Important fields:
 
@@ -173,7 +174,7 @@ Important fields:
 - `Status`
 - `Schedule Month Start Date`
 
-The portal uses the current month through year-end and counts how many schedule months are validated.
+The portal displays all 12 months in the current year and counts how many schedule months are confirmed. The raw Airtable validated status is shown to clients as `Confirmed`.
 
 Validated status:
 
@@ -280,16 +281,20 @@ Important notes:
 
 The calendar is rendered by `src/components/client-calendar.tsx`.
 
-Supported views:
+Supported range options:
 
 - Month
 - Week
+
+Supported format options:
+
+- Calendar
 - List
 
 Important behavior:
 
 - The calendar fetches the relevant schedule window from the API instead of loading unlimited records.
-- Month/week/list interactions request data for the visible date range.
+- Range and format interactions request data for the visible date range.
 - Gigs are plotted using the Airtable `Date` field.
 - Display text uses venue and gig time span.
 - Times are shown in the hotel's timezone.
@@ -309,13 +314,13 @@ The Home dashboard contains:
 
 The current day expands by default. If the current day is outside the shown week, the first day with bookings opens.
 
-### Schedule Validation
+### Schedule Progress
 
-Shows validated schedule months from the current month through year-end.
+Shows confirmed schedule months across the current year.
 
-### Open Schedule Days
+### Monthly Entertainment
 
-Counts unique days in the next 90 days without scheduled client-facing entertainment.
+Shows this month and next month's scheduled entertainment counts as quick dashboard KPIs.
 
 ### Holiday Coverage
 
@@ -505,7 +510,7 @@ Do not add code that writes to the production Booking Operations base unless MHW
 - Confirm the `2026 Date` field is populated.
 - Confirm linked `Gigs` records are correct.
 
-### Schedule validation looks wrong
+### Schedule progress looks wrong
 
 - Check Steady Schedules by Month for the property.
 - Confirm `Month`, `Year`, `Status`, and `Schedule Month Start Date` are populated.
@@ -517,4 +522,3 @@ Do not add code that writes to the production Booking Operations base unless MHW
 - Confirm all required environment variables exist.
 - Run `npm run build` locally.
 - Fix TypeScript/build errors before pushing again.
-

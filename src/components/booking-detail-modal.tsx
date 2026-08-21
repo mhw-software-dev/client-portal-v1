@@ -77,6 +77,73 @@ function getHref(value: string) {
   return "";
 }
 
+type PerformerLink = {
+  href: string;
+  label: string;
+};
+
+const socialDomains = [
+  "bandcamp.",
+  "facebook.",
+  "instagram.",
+  "linktr.ee",
+  "linkedin.",
+  "soundcloud.",
+  "spotify.",
+  "threads.",
+  "tiktok.",
+  "twitter.",
+  "x.com",
+  "youtube.",
+];
+
+function normalizeUrl(url: string) {
+  const trimmedUrl = url.trim().replace(/[).,;]+$/, "");
+  if (/^www\./i.test(trimmedUrl)) return `https://${trimmedUrl}`;
+
+  return trimmedUrl;
+}
+
+function getLinksFromValue(value?: string): PerformerLink[] {
+  const trimmedValue = value?.trim();
+  if (!trimmedValue) return [];
+
+  const urls = trimmedValue.match(/https?:\/\/[^\s|,]+|www\.[^\s|,]+/gi);
+
+  if (urls?.length) {
+    return urls.map((url) => {
+      const normalizedUrl = normalizeUrl(url);
+
+      return {
+        href: normalizedUrl,
+        label: normalizedUrl,
+      };
+    });
+  }
+
+  return [
+    {
+      href: getHref(trimmedValue),
+      label: trimmedValue,
+    },
+  ];
+}
+
+function isSocialLink(link: PerformerLink) {
+  const searchableValue = `${link.href} ${link.label}`.toLowerCase();
+
+  return socialDomains.some((domain) => searchableValue.includes(domain));
+}
+
+function splitSocialAndWebsiteLinks(value?: string) {
+  const links = getLinksFromValue(value);
+
+  return {
+    socialLinks: links.filter(isSocialLink),
+    websiteLinks: links.filter((link) => !isSocialLink(link)),
+  };
+}
+
 function getAccountManagerContact(accountManager?: string) {
   const normalizedName = accountManager?.trim().toLowerCase();
 
@@ -88,6 +155,30 @@ function getAccountManagerContact(accountManager?: string) {
   }
 
   return null;
+}
+
+function PerformerLinkCard({ label, links }: { label: string; links: PerformerLink[] }) {
+  return (
+    <div className="mhw-modal-detail-card">
+      <span>{label}</span>
+      <div className="mhw-modal-link-list">
+        {links.map((link, index) =>
+          link.href ? (
+            <a
+              href={link.href}
+              key={`${label}-${link.label}-${index}`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {link.label}
+            </a>
+          ) : (
+            <strong key={`${label}-${link.label}-${index}`}>{link.label}</strong>
+          ),
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function BookingDetailModal({
@@ -126,13 +217,12 @@ export function BookingDetailModal({
 
   const performerItems = [
     ["Performer", event.performer],
-    ["Social Media or Website", event.socialMediaOrWebsite],
     ["Genres", event.genres],
     ["Instrumentation", event.instrumentation],
   ].filter(([, value]) => hasContent(value));
-  const socialHref = getHref(event.socialMediaOrWebsite || "");
+  const { socialLinks, websiteLinks } = splitSocialAndWebsiteLinks(event.socialMediaOrWebsite);
+  const hasPerformerLinks = socialLinks.length > 0 || websiteLinks.length > 0;
   const additionalLinksHref = getHref(event.additionalPerformanceLinks || "");
-  const socialDisplayValue = socialHref || event.socialMediaOrWebsite || "";
   return (
     <div className="mhw-modal-backdrop" onMouseDown={onClose} role="presentation">
       <section
@@ -208,16 +298,28 @@ export function BookingDetailModal({
               <p>{event.performerBio || "Performer bio is not available yet."}</p>
             </div>
             <div className="mhw-modal-detail-grid">
-              {performerItems.map(([label, value]) => (
+              {performerItems.slice(0, 1).map(([label, value]) => (
                 <div className="mhw-modal-detail-card" key={label}>
                   <span>{label}</span>
-                  {label === "Social Media or Website" && socialHref ? (
-                    <a href={socialHref} rel="noreferrer" target="_blank">
-                      {socialDisplayValue}
-                    </a>
-                  ) : (
-                    <strong>{value}</strong>
-                  )}
+                  <strong>{value}</strong>
+                </div>
+              ))}
+              {socialLinks.length > 0 ? (
+                <PerformerLinkCard label="Social Media" links={socialLinks} />
+              ) : null}
+              {websiteLinks.length > 0 ? (
+                <PerformerLinkCard label="Website" links={websiteLinks} />
+              ) : null}
+              {!hasPerformerLinks ? (
+                <div className="mhw-modal-detail-card is-empty">
+                  <span>Social Media & Website</span>
+                  <strong>No social media or website available yet.</strong>
+                </div>
+              ) : null}
+              {performerItems.slice(1).map(([label, value]) => (
+                <div className="mhw-modal-detail-card" key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
                 </div>
               ))}
             </div>

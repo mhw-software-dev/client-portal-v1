@@ -36,7 +36,8 @@ type CalendarDay = {
   today: boolean;
 };
 
-type CalendarView = "Month" | "Week" | "List";
+type CalendarMode = "Calendar" | "List";
+type CalendarRange = "Month" | "Week";
 
 type DaySchedule = {
   dateLabel: string;
@@ -55,7 +56,8 @@ type MonthEventGroup = {
 };
 
 const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const views: CalendarView[] = ["Month", "Week", "List"];
+const calendarRanges: CalendarRange[] = ["Month", "Week"];
+const calendarModes: CalendarMode[] = ["Calendar", "List"];
 
 const monthFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -317,13 +319,13 @@ function getSafeFilePart(value: string) {
 }
 
 function buildCalendarDownload({
-  activeView,
+  viewLabel,
   events,
   headerLabel,
   hotelName,
   hotelTimezone,
 }: {
-  activeView: CalendarView;
+  viewLabel: string;
   events: CalendarEvent[];
   headerLabel: string;
   hotelName: string;
@@ -382,7 +384,7 @@ function buildCalendarDownload({
 
   return {
     content: `${lines.join("\r\n")}\r\n`,
-    filename: `${getSafeFilePart(hotelName)}-${getSafeFilePart(activeView)}-${getSafeFilePart(headerLabel)}.ics`,
+    filename: `${getSafeFilePart(hotelName)}-${getSafeFilePart(viewLabel)}-${getSafeFilePart(headerLabel)}.ics`,
   };
 }
 
@@ -395,28 +397,30 @@ function formatDateForRequest(date: Date) {
 }
 
 function buildFetchRange({
-  activeView,
+  calendarMode,
+  calendarRange,
   calendarDays,
   visibleMonth,
   weekDays,
 }: {
-  activeView: CalendarView;
+  calendarMode: CalendarMode;
+  calendarRange: CalendarRange;
   calendarDays: CalendarDay[];
   visibleMonth: Date;
   weekDays: CalendarDay[];
 }): CalendarFetchRange {
-  if (activeView === "Week") {
+  if (calendarRange === "Week") {
     const startDate = formatDateForRequest(weekDays[0].date);
     const endDate = formatDateForRequest(addDays(weekDays[6].date, 1));
 
-    return { endDate, key: `week:${startDate}:${endDate}`, startDate };
+    return { endDate, key: `week:${calendarMode}:${startDate}:${endDate}`, startDate };
   }
 
-  if (activeView === "List") {
+  if (calendarMode === "List") {
     const startDate = formatDateForRequest(visibleMonth);
     const endDate = formatDateForRequest(addMonths(visibleMonth, 1));
 
-    return { endDate, key: `list:${startDate}:${endDate}`, startDate };
+    return { endDate, key: `month:list:${startDate}:${endDate}`, startDate };
   }
 
   const firstDay = calendarDays[0].date;
@@ -424,13 +428,14 @@ function buildFetchRange({
   const startDate = formatDateForRequest(firstDay);
   const endDate = formatDateForRequest(addDays(lastDay, 1));
 
-  return { endDate, key: `month:${startDate}:${endDate}`, startDate };
+  return { endDate, key: `month:calendar:${startDate}:${endDate}`, startDate };
 }
 
 export function ClientCalendar() {
   const today = useMemo(() => new Date(), []);
   const initialFocusDate = useMemo(() => new Date(), []);
-  const [activeView, setActiveView] = useState<CalendarView>("Month");
+  const [calendarMode, setCalendarMode] = useState<CalendarMode>("Calendar");
+  const [calendarRange, setCalendarRange] = useState<CalendarRange>("Month");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [focusDate, setFocusDate] = useState(initialFocusDate);
   const [hotelName, setHotelName] = useState("Client Property");
@@ -457,10 +462,11 @@ export function ClientCalendar() {
 
   const monthLabel = monthFormatter.format(visibleMonth);
   const weekLabel = getRangeLabel(weekDays);
-  const headerLabel = activeView === "Week" ? weekLabel : monthLabel;
+  const headerLabel = calendarRange === "Week" ? weekLabel : monthLabel;
+  const viewLabel = `${calendarRange} ${calendarMode}`;
   const fetchRange = useMemo(
-    () => buildFetchRange({ activeView, calendarDays, visibleMonth, weekDays }),
-    [activeView, calendarDays, visibleMonth, weekDays],
+    () => buildFetchRange({ calendarMode, calendarRange, calendarDays, visibleMonth, weekDays }),
+    [calendarMode, calendarRange, calendarDays, visibleMonth, weekDays],
   );
 
   useEffect(() => {
@@ -544,7 +550,7 @@ export function ClientCalendar() {
 
       if (Number.isNaN(eventDate.getTime())) return false;
 
-      if (activeView === "Week") {
+      if (calendarRange === "Week") {
         const weekStart = weekDays[0]?.date;
         const weekEnd = weekDays[6]?.date;
 
@@ -556,14 +562,14 @@ export function ClientCalendar() {
         eventDate.getFullYear() === visibleMonth.getFullYear()
       );
     });
-  }, [activeView, events, visibleMonth, weekDays]);
+  }, [calendarRange, events, visibleMonth, weekDays]);
 
   const currentPeriodEvents = visibleEvents.length;
-  const summaryPeriodLabel = activeView === "Week" ? "Visible week" : "Visible month";
+  const summaryPeriodLabel = calendarRange === "Week" ? "Visible week" : "Visible month";
 
   function handleNavigate(direction: -1 | 1) {
     setFocusDate((current) => {
-      if (activeView === "Week") return addDays(current, direction * 7);
+      if (calendarRange === "Week") return addDays(current, direction * 7);
       return addMonths(current, direction);
     });
   }
@@ -581,11 +587,11 @@ export function ClientCalendar() {
     if (visibleEvents.length === 0) return;
 
     const { content, filename } = buildCalendarDownload({
-      activeView,
       events: visibleEvents,
       headerLabel,
       hotelName,
       hotelTimezone,
+      viewLabel,
     });
     const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
     const downloadUrl = URL.createObjectURL(blob);
@@ -619,7 +625,7 @@ export function ClientCalendar() {
             <div className="mhw-calendar-summary-cards">
               <article className="mhw-calendar-summary-card is-bookings">
                 <strong>{currentPeriodEvents}</strong>
-                <span>{activeView === "Week" ? "Bookings this week" : "Bookings this month"}</span>
+                <span>{calendarRange === "Week" ? "Bookings this week" : "Bookings this month"}</span>
               </article>
             </div>
             <p>Updated from your MHW schedule.</p>
@@ -629,17 +635,42 @@ export function ClientCalendar() {
 
       <section className="mhw-shell mhw-calendar-stage" aria-label="Client schedule calendar">
         <div className="mhw-calendar-toolbar">
-          <div className="mhw-segmented-control" aria-label="Calendar view">
-            {views.map((view) => (
-              <button
-                className={activeView === view ? "is-active" : ""}
-                key={view}
-                onClick={() => setActiveView(view)}
-                type="button"
-              >
-                {view}
-              </button>
-            ))}
+          <div className="mhw-calendar-view-controls">
+            <span className="mhw-calendar-view-label">Schedule View</span>
+            <div className="mhw-calendar-view-switches">
+              <div className="mhw-calendar-control-group">
+                <span>Range</span>
+                <div className="mhw-segmented-control" aria-label="Calendar range">
+                  {calendarRanges.map((range) => (
+                    <button
+                      aria-pressed={calendarRange === range}
+                      className={calendarRange === range ? "is-active" : ""}
+                      key={range}
+                      onClick={() => setCalendarRange(range)}
+                      type="button"
+                    >
+                      {range}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mhw-calendar-control-group">
+                <span>Format</span>
+                <div className="mhw-segmented-control" aria-label="Calendar display format">
+                  {calendarModes.map((mode) => (
+                    <button
+                      aria-pressed={calendarMode === mode}
+                      className={calendarMode === mode ? "is-active" : ""}
+                      key={mode}
+                      onClick={() => setCalendarMode(mode)}
+                      type="button"
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
           <div className="mhw-calendar-export">
             <span>{visibleEvents.length} bookings in view</span>
@@ -657,14 +688,14 @@ export function ClientCalendar() {
           <div className="mhw-calendar-panel">
             <div className="mhw-calendar-panel-header">
               <div>
-                <p className="mhw-kicker">{activeView} View</p>
+                <p className="mhw-kicker">{viewLabel}</p>
                 <h2>{headerLabel}</h2>
                 <p className="mhw-timezone-note">{getTimezoneLabel(hotelTimezone)}</p>
               </div>
               <div className="mhw-calendar-actions" aria-label="Calendar navigation">
                 <button
                   type="button"
-                  aria-label={activeView === "Week" ? "Previous week" : "Previous month"}
+                  aria-label={calendarRange === "Week" ? "Previous week" : "Previous month"}
                   onClick={() => handleNavigate(-1)}
                 >
                   ‹
@@ -672,7 +703,7 @@ export function ClientCalendar() {
                 <button type="button" onClick={handleToday}>Today</button>
                 <button
                   type="button"
-                  aria-label={activeView === "Week" ? "Next week" : "Next month"}
+                  aria-label={calendarRange === "Week" ? "Next week" : "Next month"}
                   onClick={() => handleNavigate(1)}
                 >
                   ›
@@ -680,7 +711,7 @@ export function ClientCalendar() {
               </div>
             </div>
 
-            {activeView === "Month" ? (
+            {calendarMode === "Calendar" && calendarRange === "Month" ? (
               <CalendarGrid
                 days={calendarDays}
                 eventsByDate={eventsByDate}
@@ -689,7 +720,7 @@ export function ClientCalendar() {
               />
             ) : null}
 
-            {activeView === "Week" ? (
+            {calendarMode === "Calendar" && calendarRange === "Week" ? (
               <WeekView
                 days={weekDays}
                 eventsByDate={eventsByDate}
@@ -698,22 +729,24 @@ export function ClientCalendar() {
               />
             ) : null}
 
-            {activeView === "List" ? (
-              <ListView events={visibleEvents} monthLabel={monthLabel} onSelectEvent={selectEvent} />
+            {calendarMode === "List" ? (
+              <ListView events={visibleEvents} periodLabel={headerLabel} onSelectEvent={selectEvent} />
             ) : null}
           </div>
         </div>
 
-      <div className="mhw-mobile-agenda" aria-label="Mobile agenda preview">
-        <div className="mhw-section-heading-row">
-          <div>
-            <p className="mhw-kicker">Agenda</p>
-            <h2>{activeView === "Week" ? "Upcoming this week" : "Upcoming this month"}</h2>
+      {calendarMode === "Calendar" && calendarRange === "Month" ? (
+        <div className="mhw-mobile-agenda" aria-label="Mobile agenda preview">
+          <div className="mhw-section-heading-row">
+            <div>
+              <p className="mhw-kicker">Agenda</p>
+              <h2>Upcoming this month</h2>
+            </div>
+            <span>{visibleEvents.length} bookings</span>
           </div>
-          <span>{visibleEvents.length} bookings</span>
+          <AgendaList events={visibleEvents} emptyLabel={headerLabel} onSelectEvent={selectEvent} />
         </div>
-        <AgendaList events={visibleEvents} emptyLabel={headerLabel} onSelectEvent={selectEvent} />
-      </div>
+      ) : null}
 
       <DayScheduleModal
         daySchedule={daySchedule}
@@ -968,20 +1001,20 @@ function WeekEventBoard({
 
 function ListView({
   events,
-  monthLabel,
+  periodLabel,
   onSelectEvent,
 }: {
   events: CalendarEvent[];
-  monthLabel: string;
+  periodLabel: string;
   onSelectEvent: (event: CalendarEvent) => void;
 }) {
   return (
     <div className="mhw-list-view" aria-label="Booking list">
       <div className="mhw-list-view-heading">
         <p className="mhw-kicker">Schedule List</p>
-        <h3>{events.length} bookings in {monthLabel}</h3>
+        <h3>{events.length} bookings in {periodLabel}</h3>
       </div>
-      <AgendaList events={events} emptyLabel={monthLabel} onSelectEvent={onSelectEvent} />
+      <AgendaList events={events} emptyLabel={periodLabel} onSelectEvent={onSelectEvent} />
     </div>
   );
 }

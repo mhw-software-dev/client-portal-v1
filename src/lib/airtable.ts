@@ -156,6 +156,7 @@ export type ClientProfileResult = {
   email?: string;
   hotelName?: string;
   hotelTimezone?: string;
+  jobTitle?: string;
   message: string;
   name?: string;
   status: "connected" | "missing_config" | "not_authorized" | "error";
@@ -677,6 +678,7 @@ export async function getClientProfile(email: string): Promise<ClientProfileResu
     const hotelTimezone = stringifyField(hotel.fields[config.hotelTimezoneField]);
     const contactEmail = stringifyField(contact.fields[config.hotelContactsEmailField]) || email;
     const name = stringifyField(contact.fields["Contact Name"]) || getNameFromEmail(contactEmail);
+    const jobTitle = stringifyField(contact.fields["Job Title"]);
     const accountManager =
       stringifyField(hotel.fields["MHW Account Manager"]) ||
       "No MHW Account Manager assigned";
@@ -688,6 +690,7 @@ export async function getClientProfile(email: string): Promise<ClientProfileResu
       email: contactEmail,
       hotelName,
       hotelTimezone,
+      jobTitle,
       message: "Client profile loaded.",
       name,
       status: "connected",

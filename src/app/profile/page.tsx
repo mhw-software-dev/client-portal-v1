@@ -25,6 +25,26 @@ function RequiredDetailItem({ label, value }: { label: string; value: string }) 
   );
 }
 
+function ContactLinks({
+  email,
+  phone,
+  tel,
+}: {
+  email: string;
+  phone: string;
+  tel: string;
+}) {
+  return (
+    <div className="mhw-profile-detail">
+      <span>Account manager contact</span>
+      <strong className="mhw-profile-contact-links">
+        <a href={`mailto:${email}`}>{email}</a>
+        <a href={`tel:${tel}`}>{phone}</a>
+      </strong>
+    </div>
+  );
+}
+
 export default async function ProfilePage() {
   const session = await getClientPortalSession();
 
@@ -54,13 +74,18 @@ export default async function ProfilePage() {
             <section className="mhw-profile-card" aria-label="Client profile details">
               {profile.status === "connected" ? (
                 <>
-                  <div className="mhw-profile-avatar" aria-hidden="true">
-                    {(profile.name || profile.email || "C").charAt(0).toUpperCase()}
-                  </div>
-                  <div className="mhw-profile-heading">
-                    <p className="mhw-kicker">Client Contact</p>
-                    <h2>{profile.name || "Client Contact"}</h2>
-                    <span>{profileEmail}</span>
+                  <div className="mhw-profile-card-header">
+                    <div className="mhw-profile-avatar" aria-hidden="true">
+                      {(profile.name || profile.email || "C").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="mhw-profile-heading">
+                      <p className="mhw-kicker">Client Contact</p>
+                      <h2>{profile.name || "Client Contact"}</h2>
+                      {profile.jobTitle ? (
+                        <span className="mhw-profile-job-title">{profile.jobTitle}</span>
+                      ) : null}
+                      <span>{profileEmail}</span>
+                    </div>
                   </div>
 
                   <div className="mhw-profile-details">
@@ -70,19 +95,7 @@ export default async function ProfilePage() {
                       label="Account manager"
                       value={profile.accountManager || "No MHW Account Manager assigned"}
                     />
-                    {accountManagerContact ? (
-                      <div className="mhw-profile-detail">
-                        <span>Account manager contact</span>
-                        <strong className="mhw-profile-contact-links">
-                          <a href={`mailto:${accountManagerContact.email}`}>
-                            {accountManagerContact.email}
-                          </a>
-                          <a href={`tel:${accountManagerContact.tel}`}>
-                            {accountManagerContact.phone}
-                          </a>
-                        </strong>
-                      </div>
-                    ) : null}
+                    {accountManagerContact ? <ContactLinks {...accountManagerContact} /> : null}
                   </div>
 
                   <div className="mhw-profile-support">

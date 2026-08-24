@@ -92,7 +92,7 @@ export default async function Home() {
   const session = await getClientPortalSession();
 
   if (!session) {
-    redirect("/sign-in?reason=session-expired");
+    redirect("/sign-in");
   }
 
   const email = session.email;

@@ -41,6 +41,10 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           </div>
           <SignInErrorNotice error={error} reason={reason} />
           <SignInForm />
+          <p className="mhw-auth-security-note">
+            Secure links expire for your protection. Access is limited to approved
+            MHW client contacts.
+          </p>
           <div className="mhw-auth-help">
             <p>Need access?</p>
             <Link href="https://www.mhwlivemusic.com/contact" target="_blank">
@@ -53,8 +57,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           <p className="mhw-kicker">Built for MHW clients</p>
           <h2>Schedules, performer details, and planning status in one place.</h2>
           <ul>
-            <li>Review upcoming entertainment bookings.</li>
-            <li>Open detailed performer and schedule information.</li>
+            <li>View bookings by month or week.</li>
+            <li>Switch between calendar and list formats.</li>
+            <li>Open performer details, videos, and contact info.</li>
             <li>Track holiday coverage and schedule progress.</li>
           </ul>
           <p>

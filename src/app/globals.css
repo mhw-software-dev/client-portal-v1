@@ -3465,6 +3465,18 @@ img {
   max-width: 34rem;
 }
 
+.mhw-auth-security-note {
+  background: rgb(12 50 101 / 0.04);
+  border: 1px solid rgb(12 50 101 / 0.09);
+  border-radius: 0.8rem;
+  color: var(--mhw-dark-grey);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin-top: -0.75rem;
+  max-width: 34rem;
+  padding: 0.85rem 1rem;
+}
+
 .mhw-auth-help {
   align-items: center;
   border-top: 1px solid var(--mhw-light-grey);

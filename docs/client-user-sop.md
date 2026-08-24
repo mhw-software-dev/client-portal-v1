@@ -50,9 +50,12 @@ Available format options:
 Clients can:
 
 - Move between months/weeks.
+- Review bookings added since Sunday.
 - Open booking details.
 - Download calendar events.
 - Review times in the property's timezone.
+
+Click `Added this week` to see the bookings that were newly added during the current week.
 
 ## Booking Details
 

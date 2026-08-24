@@ -81,6 +81,16 @@ Expected result when configured:
 }
 ```
 
+## Reusable Portal Build Template
+
+For future MHW portal builds, use:
+
+```text
+docs/mhw-portal-build-template.md
+```
+
+It documents the reusable MHW portal structure, brand rules, component patterns, integration checklist, launch QA checklist, and safety rules.
+
 ## Recommended Next Steps
 
 1. Define the Client Portal user and use case.

@@ -41,6 +41,7 @@ Clients only see booking data connected to their property. The portal currently 
 
 - This week's entertainment
 - Full calendar with month/week range options and calendar/list format options
+- Calendar summary for bookings added during the current week
 - Booking details
 - Performer details
 - Holiday coverage
@@ -53,6 +54,7 @@ Clients only see booking data connected to their property. The portal currently 
 - Hotel Contacts: controls portal access.
 - Hotels: property information, timezone, and account manager details.
 - Gigs: client-facing entertainment schedule.
+- Gigs `Created` field: powers the calendar's added-this-week summary.
 - Holiday-Hotel: holiday coverage per property.
 - Steady Schedules by Month: schedule progress status.
 - Client Portal Sign In Tokens: secure sign-in token records.

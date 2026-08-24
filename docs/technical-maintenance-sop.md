@@ -299,11 +299,15 @@ Important behavior:
 
 - The calendar fetches the relevant schedule window from the API instead of loading unlimited records.
 - Range and format interactions request data for the visible date range.
+- The calendar hero shows bookings in view, bookings added since Sunday, and the latest visible booking addition.
+- The `Added this week` row opens a modal with the underlying newly added bookings.
 - Gigs are plotted using the Airtable `Date` field.
 - Display text uses venue and gig time span.
 - Times are shown in the hotel's timezone.
 - Downloaded calendar events use timezone-aware event data.
 - Booking detail modals can be opened from calendar bookings, weekly entertainment, and holiday coverage.
+- A top green progress bar appears during route navigation and calendar data loading.
+- The calendar loading/status toast is centered near the bottom and positioned above the support widget on mobile.
 
 ## Home Dashboard Implementation
 

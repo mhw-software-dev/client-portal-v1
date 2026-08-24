@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={lato.variable}>
+    <html lang="en" className={lato.variable} data-scroll-behavior="smooth">
       <body>
         <NavigationProgress />
         {children}

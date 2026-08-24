@@ -533,12 +533,15 @@ export function ClientCalendar() {
           });
           setHotelName(body.hotelName || validEvents[0]?.hotel || "Client Property");
           setHotelTimezone(body.hotelTimezone || validEvents[0]?.hotelTimezone || "");
-          setLoadedRangeKeys((currentKeys) => [...currentKeys, fetchRange.key]);
         } else {
           setEvents([]);
-          setLoadedRangeKeys([]);
         }
 
+        setLoadedRangeKeys((currentKeys) =>
+          currentKeys.includes(fetchRange.key)
+            ? currentKeys
+            : [...currentKeys, fetchRange.key],
+        );
         setSourceMessage(getClientSafeSourceMessage(body.status));
       } catch (error) {
         if (!isMounted) return;

@@ -144,7 +144,7 @@ AIRTABLE_GIGS_EXCLUDED_GIG_CODE=Last Minute Cancellation
 
 The combined `Social Media or Website` source field is split in the booking details modal for display. Social links and website links appear as separate tiles when available; if neither value exists, the modal shows an empty-state contact tile.
 
-The calendar hero summary uses `Created` and `Client Visible Last Modified` to show recently added or updated bookings and the latest visible schedule update.
+The calendar hero summary uses `Created` to show bookings added since Sunday and the latest visible booking addition. `Client Visible Last Modified` remains available as a configured field for future client-visible update summaries if needed.
 
 ### Holiday-Hotel
 

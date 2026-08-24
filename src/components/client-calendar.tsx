@@ -396,8 +396,8 @@ function buildCalendarDownload({
   };
 }
 
-function getActivityDate(event: CalendarEvent) {
-  const rawDate = event.updatedAt || event.createdAt || "";
+function getCreatedDate(event: CalendarEvent) {
+  const rawDate = event.createdAt || "";
   if (!rawDate.trim()) return new Date(Number.NaN);
 
   const parsed = new Date(rawDate);
@@ -467,6 +467,7 @@ export function ClientCalendar() {
   const [sourceMessage, setSourceMessage] = useState("Preparing your schedule...");
   const [daySchedule, setDaySchedule] = useState<DaySchedule | null>(null);
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
+  const [isAddedThisWeekOpen, setIsAddedThisWeekOpen] = useState(false);
 
   const visibleMonth = useMemo(
     () => new Date(focusDate.getFullYear(), focusDate.getMonth(), 1),
@@ -588,17 +589,16 @@ export function ClientCalendar() {
 
   const currentPeriodEvents = visibleEvents.length;
   const summaryPeriodLabel = calendarRange === "Week" ? "Visible week" : "Visible month";
-  const recentActivityThreshold = new Date(today);
-  recentActivityThreshold.setDate(today.getDate() - 14);
-  const eventActivityDates = visibleEvents
-    .map(getActivityDate)
+  const addedThisWeekStart = getStartOfWeek(today);
+  const eventCreatedDates = visibleEvents
+    .map(getCreatedDate)
     .filter((date) => !Number.isNaN(date.getTime()));
-  const recentlyUpdatedEvents = eventActivityDates.filter(
-    (date) => date >= recentActivityThreshold,
-  ).length;
-  const lastScheduleUpdate =
-    eventActivityDates.length > 0
-      ? new Date(Math.max(...eventActivityDates.map((date) => date.getTime())))
+  const addedThisWeekEvents = visibleEvents
+    .filter((event) => getCreatedDate(event) >= addedThisWeekStart)
+    .sort((eventA, eventB) => getCreatedDate(eventB).getTime() - getCreatedDate(eventA).getTime());
+  const latestBookingAdded =
+    eventCreatedDates.length > 0
+      ? new Date(Math.max(...eventCreatedDates.map((date) => date.getTime())))
       : new Date(Number.NaN);
 
   function handleNavigate(direction: -1 | 1) {
@@ -641,6 +641,11 @@ export function ClientCalendar() {
 
   return (
     <>
+      {isLoadingEvents ? (
+        <div className="mhw-route-progress" aria-label="Loading schedule" role="status">
+          <span />
+        </div>
+      ) : null}
       <section className="mhw-calendar-hero">
         <div className="mhw-shell mhw-calendar-hero-grid">
           <div className="mhw-calendar-hero-copy">
@@ -661,16 +666,22 @@ export function ClientCalendar() {
                 <strong>{currentPeriodEvents}</strong>
                 <span>{calendarRange === "Week" ? "Bookings this week" : "Bookings this month"}</span>
               </article>
-              <article className="mhw-calendar-summary-card">
-                <strong>{recentlyUpdatedEvents}</strong>
-                <span>Recently added or updated</span>
-              </article>
-              <article className="mhw-calendar-summary-card is-date-card">
-                <strong>{formatSummaryDate(lastScheduleUpdate)}</strong>
-                <span>Last schedule update</span>
-              </article>
+              <div className="mhw-calendar-summary-rows">
+                <button
+                  disabled={addedThisWeekEvents.length === 0}
+                  onClick={() => setIsAddedThisWeekOpen(true)}
+                  type="button"
+                >
+                  <span>Added this week</span>
+                  <strong>{addedThisWeekEvents.length}</strong>
+                </button>
+                <div>
+                  <span>Latest booking added</span>
+                  <strong>{formatSummaryDate(latestBookingAdded)}</strong>
+                </div>
+              </div>
             </div>
-            <p>Recent changes reflect newly added or updated bookings from MHW.</p>
+            <p>Recent additions reflect bookings added since Sunday.</p>
           </div>
         </div>
       </section>
@@ -797,6 +808,15 @@ export function ClientCalendar() {
           setDaySchedule(null);
           selectEvent(event);
         }}
+      />
+      <AddedThisWeekModal
+        events={addedThisWeekEvents}
+        onClose={() => setIsAddedThisWeekOpen(false)}
+        onSelectEvent={(event) => {
+          setIsAddedThisWeekOpen(false);
+          selectEvent(event);
+        }}
+        open={isAddedThisWeekOpen}
       />
       <BookingDetailModal event={detailEvent} onClose={() => setDetailEvent(null)} />
       {isLoadingEvents || sourceMessage ? (
@@ -1143,6 +1163,70 @@ function DayScheduleModal({
               <strong>{event.venue}</strong>
               <p>{event.performer || "Performer pending"}</p>
             </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function AddedThisWeekModal({
+  events,
+  onClose,
+  onSelectEvent,
+  open,
+}: {
+  events: CalendarEvent[];
+  onClose: () => void;
+  onSelectEvent: (event: CalendarEvent) => void;
+  open: boolean;
+}) {
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(keyboardEvent: KeyboardEvent) {
+      if (keyboardEvent.key === "Escape") onClose();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="mhw-modal-backdrop is-compact" onMouseDown={onClose} role="presentation">
+      <section
+        aria-labelledby="added-this-week-title"
+        aria-modal="true"
+        className="mhw-added-bookings-modal"
+        onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
+        role="dialog"
+      >
+        <div className="mhw-day-schedule-header">
+          <div>
+            <p className="mhw-kicker">Added This Week</p>
+            <h2 id="added-this-week-title">New bookings since Sunday</h2>
+          </div>
+          <button aria-label="Close added bookings" onClick={onClose} type="button">
+            ×
+          </button>
+        </div>
+        <div className="mhw-added-bookings-list">
+          {events.map((event) => (
+            <article className="mhw-added-booking-row" key={event.id}>
+              <div>
+                <span>{getEventDateLabel(event)}</span>
+                <strong>{event.venue}</strong>
+                <p>{event.time} · {event.performer || "Performer pending"}</p>
+              </div>
+              <div className="mhw-added-booking-meta">
+                <span>Added {formatSummaryDate(getCreatedDate(event))}</span>
+                <button onClick={() => onSelectEvent(event)} type="button">
+                  View details
+                </button>
+              </div>
+            </article>
           ))}
         </div>
       </section>

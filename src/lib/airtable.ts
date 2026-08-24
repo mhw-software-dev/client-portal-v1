@@ -16,6 +16,7 @@ type AirtableFieldValue =
     >;
 
 type AirtableRecord = {
+  createdTime?: string;
   id: string;
   fields: Record<string, AirtableFieldValue>;
 };
@@ -31,8 +32,10 @@ type AirtableConfig = {
   clientEmailField: string;
   clientsTableId?: string;
   gigCodesField: string;
+  gigsCreatedTimeField?: string;
   gigsExcludedGigCode: string;
   gigsHotelLookupField: string;
+  gigsLastModifiedField?: string;
   gigsTableId?: string;
   hotelContactsEmailField: string;
   hotelContactsHotelField: string;
@@ -66,6 +69,7 @@ type CalendarDateRange = {
 export type ClientCalendarEvent = {
   accountManager: string;
   additionalPerformanceLinks: string;
+  createdAt: string;
   hasAssignedPerformer: boolean;
   id: string;
   date: string;
@@ -85,6 +89,7 @@ export type ClientCalendarEvent = {
   status: "Confirmed" | "Pending" | "Scheduled";
   time: string;
   title: string;
+  updatedAt: string;
   venue: string;
 };
 
@@ -186,10 +191,14 @@ export function getAirtableConfig(): AirtableConfig {
     clientEmailField: process.env.AIRTABLE_CLIENT_EMAIL_FIELD ?? "Email",
     clientsTableId: process.env.AIRTABLE_CLIENTS_TABLE_ID,
     gigCodesField: process.env.AIRTABLE_GIGS_GIG_CODES_FIELD ?? "Gig Codes",
+    gigsCreatedTimeField: process.env.AIRTABLE_GIGS_CREATED_TIME_FIELD ?? "Created",
     gigsExcludedGigCode:
       process.env.AIRTABLE_GIGS_EXCLUDED_GIG_CODE ?? "Last Minute Cancellation",
     gigsHotelLookupField:
       process.env.AIRTABLE_GIGS_HOTEL_LOOKUP_FIELD ?? "Hotels (from Gig Codes)",
+    gigsLastModifiedField:
+      process.env.AIRTABLE_GIGS_LAST_MODIFIED_FIELD ??
+      "Client Visible Last Modified",
     gigsTableId: process.env.AIRTABLE_GIGS_TABLE_ID,
     hotelContactsEmailField:
       process.env.AIRTABLE_HOTEL_CONTACTS_EMAIL_FIELD ?? "Email Address",
@@ -586,7 +595,12 @@ export async function getClientHolidayCoverage(
     const holidayGigEventMap = new Map(
       holidayGigRecords.map((gig) => [
         gig.id,
-        mapGigRecordToCalendarEvent(gig, hotelName, stringifyField(hotel.fields[config.hotelTimezoneField])),
+        mapGigRecordToCalendarEvent(
+          gig,
+          hotelName,
+          stringifyField(hotel.fields[config.hotelTimezoneField]),
+          config,
+        ),
       ]),
     );
     const holidays = holidayRecords
@@ -826,7 +840,7 @@ export async function getClientCalendarEvents(
       checkedAt,
       contactRecordId: contact.id,
       events: gigs.map((gig) =>
-        mapGigRecordToCalendarEvent(gig, hotelName, hotelTimezone),
+        mapGigRecordToCalendarEvent(gig, hotelName, hotelTimezone, config),
       ),
       hotelName,
       hotelTimezone,
@@ -927,27 +941,7 @@ async function findHolidayGigRecords(gigIds: string[], config: AirtableConfig) {
   const formula = recordIdChecks.length === 1 ? recordIdChecks[0] : `OR(${recordIdChecks.join(", ")})`;
 
   const response = await airtableListRecords(config.gigsTableId ?? "", {
-    fields: [
-      "Date",
-      "Gig Date",
-      "Gig Time Span",
-      "Venue",
-      "Musicians",
-      "Musician Name",
-      "Confirmation",
-      "Outlet Number (from Gig Codes)",
-      "MHW Account Manager (from Hotels) (from Gig Codes)",
-      "MOD Phone",
-      "Performer Bio Formula",
-      "Genres",
-      "Headshot",
-      "Instrumentation",
-      "Social Media or Website",
-      "Performance or Sample (from Musicians)",
-      "Promo Video (from Musicians)",
-      config.gigsHotelLookupField,
-      config.gigCodesField,
-    ],
+    fields: getGigFields(config),
     filterByFormula: formula,
     pageSize: 100,
   });
@@ -1058,33 +1052,42 @@ async function findClientGigs(
   const formula = `AND(${formulaParts.join(", ")})`;
 
   const response = await airtableListRecords(config.gigsTableId ?? "", {
-    fields: [
-      "Date",
-      "Gig Date",
-      "Gig Time Span",
-      "Venue",
-      "Musicians",
-      "Musician Name",
-      "Confirmation",
-      "Outlet Number (from Gig Codes)",
-      "MHW Account Manager (from Hotels) (from Gig Codes)",
-      "MOD Phone",
-      "Performer Bio Formula",
-      "Genres",
-      "Headshot",
-      "Instrumentation",
-      "Social Media or Website",
-      "Performance or Sample (from Musicians)",
-      "Promo Video (from Musicians)",
-      config.gigsHotelLookupField,
-      config.gigCodesField,
-    ],
+    fields: getGigFields(config),
     filterByFormula: formula,
     pageSize: 100,
     sort: [{ field: "Date", direction: "asc" }],
   });
 
   return response.records;
+}
+
+function getGigFields(config: AirtableConfig) {
+  const fields = [
+    "Date",
+    "Gig Date",
+    "Gig Time Span",
+    "Venue",
+    "Musicians",
+    "Musician Name",
+    "Confirmation",
+    "Outlet Number (from Gig Codes)",
+    "MHW Account Manager (from Hotels) (from Gig Codes)",
+    "MOD Phone",
+    "Performer Bio Formula",
+    "Genres",
+    "Headshot",
+    "Instrumentation",
+    "Social Media or Website",
+    "Performance or Sample (from Musicians)",
+    "Promo Video (from Musicians)",
+    config.gigsHotelLookupField,
+    config.gigCodesField,
+  ];
+
+  if (config.gigsCreatedTimeField) fields.push(config.gigsCreatedTimeField);
+  if (config.gigsLastModifiedField) fields.push(config.gigsLastModifiedField);
+
+  return fields;
 }
 
 async function airtableListRecords(
@@ -1159,8 +1162,15 @@ function mapGigRecordToCalendarEvent(
   record: AirtableRecord,
   hotelName: string,
   hotelTimezone: string,
+  config: AirtableConfig,
 ): ClientCalendarEvent {
   const date = stringifyField(record.fields["Date"]);
+  const createdAt =
+    stringifyField(
+      config.gigsCreatedTimeField
+        ? record.fields[config.gigsCreatedTimeField]
+        : undefined,
+    ) || record.createdTime || "";
   const displayDate = stringifyField(record.fields["Gig Date"]);
   const time = stringifyField(record.fields["Gig Time Span"]);
   const venue = stringifyField(record.fields.Venue);
@@ -1180,10 +1190,17 @@ function mapGigRecordToCalendarEvent(
     record.fields["Performance or Sample (from Musicians)"],
   );
   const promoVideo = getFirstAttachmentUrl(record.fields["Promo Video (from Musicians)"]);
+  const updatedAt =
+    stringifyField(
+      config.gigsLastModifiedField
+        ? record.fields[config.gigsLastModifiedField]
+        : undefined,
+    ) || createdAt;
 
   return {
     accountManager,
     additionalPerformanceLinks,
+    createdAt,
     hasAssignedPerformer: hasLinkedRecords(record.fields.Musicians),
     id: record.id,
     date,
@@ -1203,6 +1220,7 @@ function mapGigRecordToCalendarEvent(
     status: mapConfirmationToStatus(confirmation),
     time: time || "Time pending",
     title: venue || "Scheduled entertainment",
+    updatedAt,
     venue: venue || "Venue pending",
   };
 }

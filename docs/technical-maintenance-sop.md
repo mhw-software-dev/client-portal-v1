@@ -133,6 +133,8 @@ Important fields include:
 - `Hotels (from Gig Codes)`
 - `Gig Codes`
 - `Outlet Number (from Gig Codes)`
+- `Created`
+- `Client Visible Last Modified`
 
 The portal excludes gigs where `Gig Codes` matches:
 
@@ -141,6 +143,8 @@ AIRTABLE_GIGS_EXCLUDED_GIG_CODE=Last Minute Cancellation
 ```
 
 The combined `Social Media or Website` source field is split in the booking details modal for display. Social links and website links appear as separate tiles when available; if neither value exists, the modal shows an empty-state contact tile.
+
+The calendar hero summary uses `Created` and `Client Visible Last Modified` to show recently added or updated bookings and the latest visible schedule update.
 
 ### Holiday-Hotel
 
@@ -362,6 +366,8 @@ AIRTABLE_HOTEL_TIMEZONE_FIELD
 AIRTABLE_GIGS_HOTEL_LOOKUP_FIELD
 AIRTABLE_GIGS_GIG_CODES_FIELD
 AIRTABLE_GIGS_EXCLUDED_GIG_CODE
+AIRTABLE_GIGS_CREATED_TIME_FIELD
+AIRTABLE_GIGS_LAST_MODIFIED_FIELD
 AIRTABLE_HOLIDAY_HOTEL_TABLE_ID
 AIRTABLE_HOLIDAY_HOTEL_NAME_FIELD
 AIRTABLE_HOLIDAY_HOTEL_HOTEL_FIELD

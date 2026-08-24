@@ -6,6 +6,7 @@ import { type CSSProperties, useEffect, useMemo, useState } from "react";
 type CalendarEvent = {
   accountManager?: string;
   additionalPerformanceLinks?: string;
+  createdAt?: string;
   hasAssignedPerformer?: boolean;
   headshot?: string;
   id: string;
@@ -26,6 +27,7 @@ type CalendarEvent = {
   status: "Confirmed" | "Pending" | "Scheduled";
   notes: string;
   outletNumber?: string;
+  updatedAt?: string;
 };
 
 type CalendarDay = {
@@ -73,6 +75,12 @@ const dateLabelFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   month: "long",
   weekday: "long",
+  year: "numeric",
+});
+
+const summaryDateFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
   year: "numeric",
 });
 
@@ -388,6 +396,20 @@ function buildCalendarDownload({
   };
 }
 
+function getActivityDate(event: CalendarEvent) {
+  const rawDate = event.updatedAt || event.createdAt || "";
+  if (!rawDate.trim()) return new Date(Number.NaN);
+
+  const parsed = new Date(rawDate);
+  return Number.isNaN(parsed.getTime()) ? new Date(Number.NaN) : parsed;
+}
+
+function formatSummaryDate(date: Date) {
+  if (Number.isNaN(date.getTime())) return "Not available yet";
+
+  return summaryDateFormatter.format(date);
+}
+
 function formatDateForRequest(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -566,6 +588,18 @@ export function ClientCalendar() {
 
   const currentPeriodEvents = visibleEvents.length;
   const summaryPeriodLabel = calendarRange === "Week" ? "Visible week" : "Visible month";
+  const recentActivityThreshold = new Date(today);
+  recentActivityThreshold.setDate(today.getDate() - 14);
+  const eventActivityDates = visibleEvents
+    .map(getActivityDate)
+    .filter((date) => !Number.isNaN(date.getTime()));
+  const recentlyUpdatedEvents = eventActivityDates.filter(
+    (date) => date >= recentActivityThreshold,
+  ).length;
+  const lastScheduleUpdate =
+    eventActivityDates.length > 0
+      ? new Date(Math.max(...eventActivityDates.map((date) => date.getTime())))
+      : new Date(Number.NaN);
 
   function handleNavigate(direction: -1 | 1) {
     setFocusDate((current) => {
@@ -627,8 +661,16 @@ export function ClientCalendar() {
                 <strong>{currentPeriodEvents}</strong>
                 <span>{calendarRange === "Week" ? "Bookings this week" : "Bookings this month"}</span>
               </article>
+              <article className="mhw-calendar-summary-card">
+                <strong>{recentlyUpdatedEvents}</strong>
+                <span>Recently added or updated</span>
+              </article>
+              <article className="mhw-calendar-summary-card is-date-card">
+                <strong>{formatSummaryDate(lastScheduleUpdate)}</strong>
+                <span>Last schedule update</span>
+              </article>
             </div>
-            <p>Updated from your MHW schedule.</p>
+            <p>Recent changes reflect newly added or updated bookings from MHW.</p>
           </div>
         </div>
       </section>

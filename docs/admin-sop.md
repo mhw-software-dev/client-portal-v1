@@ -20,6 +20,14 @@ A hotel contact can access the portal when they exist in the Hotel Contacts tabl
 
 The contact must also have a valid email address.
 
+## Sign-In Link And Session Timing
+
+- Secure sign-in links expire after 30 minutes.
+- Each sign-in link can only be completed once.
+- After a user signs in, the session cookie remains active for 12 hours.
+- Closing the browser does not require a new sign-in link if the session cookie is still available and unexpired.
+- Logging out clears the session, so the user must request a new sign-in link.
+
 ## Add A New Client Contact
 
 1. Open the Hotel Contacts table in Airtable.

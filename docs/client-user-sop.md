@@ -15,6 +15,14 @@ Use this guide to help hotel clients sign in and review their entertainment sche
 
 If the email does not arrive, check spam/junk first, then contact MHW.
 
+## Magic Link Timing
+
+- Sign-in links expire after 30 minutes.
+- Each sign-in link can only be completed once.
+- After signing in, the portal session stays active for 12 hours.
+- If the browser is closed but the 12-hour session is still active, return to the portal URL directly.
+- If the user logs out or the 12-hour session expires, request a new sign-in link.
+
 ## Home Page
 
 The Home page gives a quick view of the property's entertainment status.

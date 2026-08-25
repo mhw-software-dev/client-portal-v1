@@ -207,6 +207,8 @@ Magic links avoid requiring hotel clients to manage passwords. Access is control
 9. The app creates a signed session cookie.
 10. User is redirected to the Home dashboard.
 
+Sign-in links expire after 30 minutes and are marked used after the user clicks `Continue to portal`. Portal sessions last 12 hours. Closing the browser does not require a new link while the session cookie remains available and unexpired; logging out clears the session.
+
 ### Token Storage
 
 Sign-in tokens live in a separate Airtable base/table so token records do not increase record count in the production Booking Operations base.

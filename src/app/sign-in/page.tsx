@@ -33,7 +33,16 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           />
           <div className="mhw-auth-copy">
             <p className="mhw-kicker">Client Portal</p>
-            <h1 id="sign-in-title">Sign in to your MHW portal.</h1>
+            <div className="mhw-auth-title-row">
+              <h1 id="sign-in-title">Sign in to your MHW portal.</h1>
+              <span className="mhw-auth-info" tabIndex={0}>
+                <span aria-hidden="true">i</span>
+                <span className="mhw-auth-info-tooltip" role="tooltip">
+                  Sign-in links expire after 30 minutes and can only be used once.
+                  Once signed in, your portal session stays active for 12 hours.
+                </span>
+              </span>
+            </div>
             <p>
               Enter your approved client email to receive a secure sign-in link.
             </p>

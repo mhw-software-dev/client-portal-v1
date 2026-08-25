@@ -104,7 +104,17 @@ export default async function AuthCallbackPage({ searchParams }: CallbackPagePro
           />
           <div className="mhw-auth-copy">
             <p className="mhw-kicker">Secure sign in</p>
-            <h1 id="continue-title">Continue to your client portal.</h1>
+            <div className="mhw-auth-title-row">
+              <h1 id="continue-title">Continue to your client portal.</h1>
+              <span className="mhw-auth-info" tabIndex={0}>
+                <span aria-hidden="true">i</span>
+                <span className="mhw-auth-info-tooltip" role="tooltip">
+                  This link expires after 30 minutes and can only be completed once.
+                  Your portal session stays active for 12 hours. If you log out,
+                  request a new sign-in link to return.
+                </span>
+              </span>
+            </div>
             <p>
               Your secure link has been verified. Continue below to open your MHW
               Client Portal session.

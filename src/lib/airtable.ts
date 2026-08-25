@@ -32,6 +32,12 @@ type AirtableConfig = {
   clientEmailField: string;
   clientsTableId?: string;
   gigCodesField: string;
+  gigFeedbackClientEmailField: string;
+  gigFeedbackClientNameField: string;
+  gigFeedbackManagerOnDutyPhoneField: string;
+  gigFeedbackNotesField: string;
+  gigFeedbackRatingField: string;
+  gigFeedbackSubmittedAtField: string;
   gigsCreatedTimeField?: string;
   gigsExcludedGigCode: string;
   gigsHotelLookupField: string;
@@ -66,10 +72,17 @@ type CalendarDateRange = {
   startDate?: string;
 };
 
+type ClientBookingFeedbackInput = {
+  bookingId: string;
+  notes: string;
+  rating: number;
+};
+
 export type ClientCalendarEvent = {
   accountManager: string;
   additionalPerformanceLinks: string;
   createdAt: string;
+  hasArtistFeedback: boolean;
   hasAssignedPerformer: boolean;
   id: string;
   date: string;
@@ -191,6 +204,18 @@ export function getAirtableConfig(): AirtableConfig {
     clientEmailField: process.env.AIRTABLE_CLIENT_EMAIL_FIELD ?? "Email",
     clientsTableId: process.env.AIRTABLE_CLIENTS_TABLE_ID,
     gigCodesField: process.env.AIRTABLE_GIGS_GIG_CODES_FIELD ?? "Gig Codes",
+    gigFeedbackClientEmailField:
+      process.env.AIRTABLE_GIG_FEEDBACK_CLIENT_EMAIL_FIELD ?? "Feedback Client Email",
+    gigFeedbackClientNameField:
+      process.env.AIRTABLE_GIG_FEEDBACK_CLIENT_NAME_FIELD ?? "Name from Feedback Form",
+    gigFeedbackManagerOnDutyPhoneField:
+      process.env.AIRTABLE_GIG_FEEDBACK_MOD_PHONE_FIELD ?? "Feedback MOD Phone",
+    gigFeedbackNotesField:
+      process.env.AIRTABLE_GIG_FEEDBACK_NOTES_FIELD ?? "Hotel Feedback Notes",
+    gigFeedbackRatingField:
+      process.env.AIRTABLE_GIG_FEEDBACK_RATING_FIELD ?? "Performer Rating",
+    gigFeedbackSubmittedAtField:
+      process.env.AIRTABLE_GIG_FEEDBACK_SUBMITTED_AT_FIELD ?? "Feedback Submitted At",
     gigsCreatedTimeField: process.env.AIRTABLE_GIGS_CREATED_TIME_FIELD ?? "Created",
     gigsExcludedGigCode:
       process.env.AIRTABLE_GIGS_EXCLUDED_GIG_CODE ?? "Last Minute Cancellation",
@@ -863,6 +888,72 @@ export async function getClientCalendarEvents(
   }
 }
 
+export async function submitClientBookingFeedback({
+  email,
+  input,
+}: {
+  email: string;
+  input: ClientBookingFeedbackInput;
+}) {
+  const config = getAirtableConfig();
+  const missingKeys = getMissingAirtableConfigKeys("calendar");
+
+  if (missingKeys.length > 0) {
+    throw new Error(`Missing feedback configuration: ${missingKeys.join(", ")}`);
+  }
+
+  if (!email.trim()) {
+    throw new Error("Missing client email.");
+  }
+
+  const contact = await findAuthorizedHotelContact(email, config);
+
+  if (!contact) {
+    throw new Error("No authorized hotel contact was found for this email.");
+  }
+
+  const hotelRecordId = getFirstLinkedRecordId(contact.fields[config.hotelContactsHotelField]);
+
+  if (!hotelRecordId) {
+    throw new Error("Authorized contact does not have a linked hotel record.");
+  }
+
+  const hotel = await airtableGetRecord(config.clientsTableId ?? "", hotelRecordId);
+  const hotelName = getHotelName(hotel, config.hotelNameField);
+
+  if (!hotelName) {
+    throw new Error("Linked hotel record does not have a readable hotel name.");
+  }
+
+  const gig = await findClientGigById(input.bookingId, hotelName, config);
+
+  if (!gig) {
+    throw new Error("This booking is not available for the signed-in client.");
+  }
+
+  const contactEmail =
+    stringifyField(contact.fields[config.hotelContactsEmailField]) || email;
+  const contactName =
+    stringifyField(contact.fields["Contact Name"]) || getNameFromEmail(contactEmail);
+  const coreFieldNames = new Set([
+    config.gigFeedbackClientNameField,
+    config.gigFeedbackNotesField,
+    config.gigFeedbackRatingField,
+  ]);
+  const fields: Record<string, unknown> = {
+    [config.gigFeedbackClientNameField]: contactName,
+    [config.gigFeedbackNotesField]: input.notes,
+    [config.gigFeedbackRatingField]: input.rating,
+  };
+
+  return updateGigFeedbackWithFieldFallback(
+    input.bookingId,
+    fields,
+    coreFieldNames,
+    config,
+  );
+}
+
 async function findAuthorizedHotelContact(email: string, config: AirtableConfig) {
   const formula = `AND(LOWER({${config.hotelContactsEmailField}}) = '${escapeFormulaString(
     email.toLowerCase().trim(),
@@ -871,6 +962,27 @@ async function findAuthorizedHotelContact(email: string, config: AirtableConfig)
   )}', ARRAYJOIN({${config.hotelContactsTypeField}}, ',')) > 0))`;
 
   const response = await airtableListRecords(config.hotelContactsTableId ?? "", {
+    filterByFormula: formula,
+    pageSize: 1,
+  });
+
+  return response.records[0];
+}
+
+async function findClientGigById(
+  gigId: string,
+  hotelName: string,
+  config: AirtableConfig,
+) {
+  const formulaParts = [
+    `RECORD_ID() = '${escapeFormulaString(gigId)}'`,
+    `FIND('${escapeFormulaString(hotelName)}', ARRAYJOIN({${config.gigsHotelLookupField}}, ',')) > 0`,
+    `NOT(FIND('${escapeFormulaString(config.gigsExcludedGigCode)}', ARRAYJOIN({${config.gigCodesField}}, ',')))`,
+  ];
+  const formula = `AND(${formulaParts.join(", ")})`;
+
+  const response = await airtableListRecords(config.gigsTableId ?? "", {
+    fields: getGigFields(config),
     filterByFormula: formula,
     pageSize: 1,
   });
@@ -1080,6 +1192,9 @@ function getGigFields(config: AirtableConfig) {
     "Social Media or Website",
     "Performance or Sample (from Musicians)",
     "Promo Video (from Musicians)",
+    config.gigFeedbackClientNameField,
+    config.gigFeedbackNotesField,
+    config.gigFeedbackRatingField,
     config.gigsHotelLookupField,
     config.gigCodesField,
   ];
@@ -1137,12 +1252,86 @@ async function airtableGetRecord(tableId: string, recordId: string) {
   return airtableFetch<AirtableRecord>(url);
 }
 
-async function airtableFetch<T>(url: URL): Promise<T> {
+async function airtableUpdateRecord(
+  tableId: string,
+  recordId: string,
+  fields: Record<string, unknown>,
+) {
+  const config = getAirtableConfig();
+  const url = new URL(`${AIRTABLE_API_URL}/${config.baseId}/${tableId}/${recordId}`);
+
+  return airtableFetch<AirtableRecord>(url, {
+    body: JSON.stringify({ fields, typecast: true }),
+    method: "PATCH",
+  });
+}
+
+async function updateGigFeedbackWithFieldFallback(
+  recordId: string,
+  fields: Record<string, unknown>,
+  coreFieldNames: Set<string>,
+  config: AirtableConfig,
+) {
+  const pendingFields = { ...fields };
+  const removedFields: Array<{ field: string; message: string }> = [];
+  const maxAttempts = Object.keys(pendingFields).length + 1;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      const updatedRecord = await airtableUpdateRecord(
+        config.gigsTableId ?? "",
+        recordId,
+        pendingFields,
+      );
+
+      if (removedFields.length > 0) {
+        console.warn("Booking feedback was saved without rejected optional fields.", {
+          removedFields,
+        });
+      }
+
+      return updatedRecord;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown Airtable error";
+
+      if (!message.includes("422")) {
+        throw error;
+      }
+
+      const rejectedField = getRejectedAirtableField(message, pendingFields);
+
+      if (!rejectedField || coreFieldNames.has(rejectedField)) {
+        throw error;
+      }
+
+      removedFields.push({ field: rejectedField, message });
+      delete pendingFields[rejectedField];
+    }
+  }
+
+  throw new Error("Booking feedback could not be saved after removing rejected fields.");
+}
+
+function getRejectedAirtableField(message: string, fields: Record<string, unknown>) {
+  const fieldNames = Object.keys(fields);
+  const quotedField = message.match(/field "([^"]+)"/i)?.[1];
+
+  if (quotedField && quotedField in fields) {
+    return quotedField;
+  }
+
+  return fieldNames.find((fieldName) => message.includes(fieldName));
+}
+
+async function airtableFetch<T>(url: URL, init: RequestInit = {}): Promise<T> {
   const config = getAirtableConfig();
   const response = await fetch(url, {
+    ...init,
     cache: "no-store",
     headers: {
       Authorization: `Bearer ${config.pat}`,
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...init.headers,
     },
   });
 
@@ -1190,6 +1379,11 @@ function mapGigRecordToCalendarEvent(
     record.fields["Performance or Sample (from Musicians)"],
   );
   const promoVideo = getFirstAttachmentUrl(record.fields["Promo Video (from Musicians)"]);
+  const hasArtistFeedback = Boolean(
+    stringifyField(record.fields[config.gigFeedbackClientNameField]) ||
+      stringifyField(record.fields[config.gigFeedbackNotesField]) ||
+      stringifyField(record.fields[config.gigFeedbackRatingField]),
+  );
   const updatedAt =
     stringifyField(
       config.gigsLastModifiedField
@@ -1201,6 +1395,7 @@ function mapGigRecordToCalendarEvent(
     accountManager,
     additionalPerformanceLinks,
     createdAt,
+    hasArtistFeedback,
     hasAssignedPerformer: hasLinkedRecords(record.fields.Musicians),
     id: record.id,
     date,

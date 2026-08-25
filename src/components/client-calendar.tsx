@@ -7,6 +7,7 @@ type CalendarEvent = {
   accountManager?: string;
   additionalPerformanceLinks?: string;
   createdAt?: string;
+  hasArtistFeedback?: boolean;
   hasAssignedPerformer?: boolean;
   headshot?: string;
   id: string;
@@ -821,7 +822,11 @@ export function ClientCalendar() {
         }}
         open={isAddedThisWeekOpen}
       />
-      <BookingDetailModal event={detailEvent} onClose={() => setDetailEvent(null)} />
+      <BookingDetailModal
+        event={detailEvent}
+        key={detailEvent?.id || "calendar-booking-detail"}
+        onClose={() => setDetailEvent(null)}
+      />
       {isLoadingEvents || sourceMessage ? (
         <div
           className={

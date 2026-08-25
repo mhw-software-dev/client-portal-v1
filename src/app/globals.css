@@ -2867,6 +2867,277 @@ img {
   line-height: 1.7;
 }
 
+.mhw-feedback-section {
+  background:
+    linear-gradient(135deg, rgb(0 149 64 / 0.05), rgb(12 50 101 / 0.03)),
+    var(--mhw-white);
+  border-top: 1px solid var(--mhw-light-grey);
+  position: relative;
+}
+
+.mhw-feedback-section::before {
+  background: linear-gradient(180deg, var(--mhw-green), var(--mhw-gold));
+  content: "";
+  inset: 0 auto 0 0;
+  position: absolute;
+  width: 0.28rem;
+}
+
+.mhw-feedback-section.is-revealed {
+  animation: mhwFeedbackReveal 360ms ease both;
+}
+
+.mhw-feedback-section.is-submitted {
+  background:
+    linear-gradient(135deg, rgb(12 50 101 / 0.035), rgb(0 149 64 / 0.035)),
+    #f8fafb;
+}
+
+.mhw-feedback-section.is-submitted::before {
+  background: linear-gradient(180deg, #7d8da3, var(--mhw-green));
+}
+
+.mhw-feedback-section .mhw-modal-section-heading p:not(.mhw-kicker) {
+  color: var(--mhw-dark-grey);
+  line-height: 1.6;
+  max-width: 42rem;
+}
+
+.mhw-feedback-guidance {
+  align-items: center;
+  background: var(--mhw-navy);
+  border-radius: 0.85rem;
+  color: var(--mhw-white);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  justify-content: space-between;
+  padding: 0.95rem 1rem;
+}
+
+.mhw-feedback-guidance strong {
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.mhw-feedback-guidance span {
+  color: rgb(255 255 255 / 0.74);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.mhw-feedback-section.is-submitted .mhw-feedback-guidance {
+  background: #f0f7f3;
+  border: 1px solid rgb(0 149 64 / 0.18);
+  color: #047236;
+}
+
+.mhw-feedback-section.is-submitted .mhw-feedback-guidance span {
+  color: rgb(12 50 101 / 0.72);
+}
+
+.mhw-feedback-context-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mhw-feedback-context-grid div {
+  background: var(--mhw-white);
+  border: 1px solid rgb(12 50 101 / 0.1);
+  display: grid;
+  gap: 0.35rem;
+  min-height: 5.25rem;
+  padding: 0.95rem;
+}
+
+.mhw-feedback-context-grid span,
+.mhw-feedback-field label,
+.mhw-feedback-field > span {
+  color: var(--mhw-gold);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mhw-feedback-context-grid strong {
+  color: var(--mhw-navy);
+  font-size: 0.98rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.mhw-feedback-form {
+  background: var(--mhw-white);
+  border: 1px solid rgb(0 149 64 / 0.22);
+  box-shadow: 0 18px 42px rgb(12 50 101 / 0.08);
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: clamp(1.1rem, 3vw, 1.35rem);
+}
+
+.mhw-feedback-section.is-submitted .mhw-feedback-form {
+  background: #f7f9fa;
+  border-color: rgb(12 50 101 / 0.12);
+  border-style: dashed;
+  box-shadow: none;
+  opacity: 0.88;
+}
+
+.mhw-feedback-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.mhw-feedback-field.is-full,
+.mhw-feedback-message,
+.mhw-feedback-submitted-panel,
+.mhw-feedback-actions {
+  grid-column: 1 / -1;
+}
+
+.mhw-feedback-submitted-panel {
+  background: #eef6f2;
+  border: 1px solid rgb(0 149 64 / 0.16);
+  border-radius: 0.85rem;
+  color: var(--mhw-navy);
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+.mhw-feedback-submitted-panel strong {
+  color: #047236;
+  font-size: 1rem;
+}
+
+.mhw-feedback-submitted-panel p {
+  color: rgb(12 50 101 / 0.72);
+  line-height: 1.55;
+}
+
+.mhw-feedback-field input,
+.mhw-feedback-field textarea {
+  background: var(--mhw-white);
+  border: 1px solid var(--mhw-light-grey);
+  border-radius: 0.7rem;
+  color: var(--mhw-navy);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  padding: 0.85rem 0.9rem;
+  width: 100%;
+}
+
+.mhw-feedback-field textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.mhw-feedback-field input:focus,
+.mhw-feedback-field textarea:focus {
+  border-color: rgb(0 149 64 / 0.55);
+  box-shadow: 0 0 0 4px rgb(0 149 64 / 0.1);
+  outline: none;
+}
+
+.mhw-feedback-field textarea:disabled {
+  background: #eef3f4;
+  border-color: rgb(12 50 101 / 0.1);
+  color: rgb(12 50 101 / 0.72);
+  cursor: default;
+}
+
+.mhw-feedback-rating {
+  align-items: center;
+  background: #f8fafb;
+  border: 1px solid var(--mhw-light-grey);
+  border-radius: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  justify-content: flex-start;
+  padding: 0.65rem 0.75rem;
+}
+
+.mhw-feedback-rating button {
+  background: transparent;
+  border: 0;
+  color: #c7cfdd;
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+  padding: 0.1rem;
+  text-shadow: 0 1px 0 rgb(12 50 101 / 0.18);
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.mhw-feedback-rating button:disabled {
+  color: #d2d9e3;
+  cursor: default;
+}
+
+.mhw-feedback-rating button:disabled:hover {
+  color: #d2d9e3;
+  transform: none;
+}
+
+.mhw-feedback-rating button.is-active:not(:disabled) {
+  color: #f2bd24;
+  transform: translateY(-1px);
+}
+
+.mhw-feedback-rating button:hover {
+  color: #f2bd24;
+}
+
+.mhw-feedback-message {
+  border-radius: 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.5;
+  padding: 0.85rem 0.95rem;
+}
+
+.mhw-feedback-message.is-success {
+  background: rgb(0 149 64 / 0.08);
+  color: #047236;
+}
+
+.mhw-feedback-message.is-error {
+  background: #fff4f0;
+  color: #9a3412;
+}
+
+.mhw-feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.mhw-feedback-actions .mhw-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+}
+
+@keyframes mhwFeedbackReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .mhw-modal-footer {
   align-items: center;
   background: rgb(255 255 255 / 0.96);
@@ -3131,12 +3402,17 @@ img {
 
   .mhw-modal-footer {
     align-items: stretch;
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .mhw-modal-footer .mhw-primary-button,
   .mhw-modal-footer .mhw-secondary-button {
     width: 100%;
+  }
+
+  .mhw-feedback-context-grid,
+  .mhw-feedback-form {
+    grid-template-columns: 1fr;
   }
 }
 

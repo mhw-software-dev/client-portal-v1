@@ -309,6 +309,7 @@ export function HomeHolidayCoverage({
 
       <BookingDetailModal
         event={selectedBooking}
+        key={selectedBooking?.id || "holiday-booking-detail"}
         onClose={() => setSelectedBooking(null)}
       />
     </section>

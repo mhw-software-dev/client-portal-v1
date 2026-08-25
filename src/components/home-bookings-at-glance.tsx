@@ -221,6 +221,7 @@ export function HomeBookingsAtGlance({
 
       <BookingDetailModal
         event={selectedBooking}
+        key={selectedBooking?.id || "weekly-booking-detail"}
         onClose={() => setSelectedBooking(null)}
       />
     </section>

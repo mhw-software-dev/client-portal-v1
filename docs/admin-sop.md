@@ -51,6 +51,7 @@ Clients only see booking data connected to their property. The portal currently 
 - Full calendar with month/week range options and calendar/list format options
 - Calendar summary for bookings added during the current week
 - Booking details
+- Performer feedback submission from booking details
 - Performer details
 - Holiday coverage
 - Schedule progress
@@ -62,6 +63,7 @@ Clients only see booking data connected to their property. The portal currently 
 - Hotel Contacts: controls portal access.
 - Hotels: property information, timezone, and account manager details.
 - Gigs: client-facing entertainment schedule.
+- Gigs feedback fields: store performer rating, hotel feedback notes, and the signed-in client contact name.
 - Gigs `Created` field: powers the calendar's added-this-week summary.
 - Holiday-Hotel: holiday coverage per property.
 - Steady Schedules by Month: schedule progress status.
@@ -71,5 +73,6 @@ Clients only see booking data connected to their property. The portal currently 
 
 - Do not delete client contacts just to remove portal access.
 - The portal should remain read-only for clients.
+- The approved exception is performer feedback from a booking detail page, which writes feedback fields back to the related Gigs record.
 - If a client cannot sign in, first confirm their email exists in Hotel Contacts and meets the access rules above.
 - If a client sees the wrong property, check the Hotel Contacts to Hotels relationship.

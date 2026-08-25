@@ -8,6 +8,8 @@ Use this SOP to understand how the MHW Client Portal is implemented, what system
 
 The MHW Client Portal is a custom Next.js application for hotel clients. It lets approved hotel contacts securely sign in and review their property's live entertainment schedule, performer details, holiday coverage, schedule progress, this month and next month's entertainment counts, and calendar exports.
 
+Clients can also submit performer feedback from a booking detail modal. That workflow writes only configured feedback fields back to the related Gigs record after the server confirms the signed-in contact has access to that booking.
+
 The portal uses Airtable as the backend data source, Resend for sign-in emails, GitHub for source control, and Vercel for hosting.
 
 ## Tech Stack
@@ -47,6 +49,7 @@ Production deploys are handled by Vercel from the `main` branch.
 - `src/app/auth/logout/route.ts`: Logout route.
 - `src/app/api/auth/request-link/route.ts`: Creates sign-in token and sends email.
 - `src/app/api/calendar/bookings/route.ts`: Calendar data API.
+- `src/app/api/calendar/feedback/route.ts`: Performer feedback submission API for booking detail modals.
 - `src/app/api/health/airtable/route.ts`: Airtable health check.
 - `src/lib/airtable.ts`: Airtable data fetching and portal data shaping.
 - `src/lib/auth.ts`: Session creation, validation, and cookies.
@@ -135,6 +138,12 @@ Important fields include:
 - `Outlet Number (from Gig Codes)`
 - `Created`
 - `Client Visible Last Modified`
+
+Required feedback fields are configured separately so the feedback workflow does not overwrite the booking's schedule fields:
+
+- `Performer Rating`
+- `Hotel Feedback Notes`
+- `Name from Feedback Form`
 
 The portal excludes gigs where `Gig Codes` matches:
 
@@ -308,6 +317,7 @@ Important behavior:
 - Times are shown in the hotel's timezone.
 - Downloaded calendar events use timezone-aware event data.
 - Booking detail modals can be opened from calendar bookings, weekly entertainment, and holiday coverage.
+- Booking detail modals include a `Submit feedback` action. The feedback form submits the rating and feedback notes to `/api/calendar/feedback`; the server adds the signed-in contact name automatically.
 - A top green progress bar appears during route navigation and calendar data loading.
 - The calendar loading/status toast is centered near the bottom and positioned above the support widget on mobile.
 
@@ -374,6 +384,9 @@ AIRTABLE_GIGS_GIG_CODES_FIELD
 AIRTABLE_GIGS_EXCLUDED_GIG_CODE
 AIRTABLE_GIGS_CREATED_TIME_FIELD
 AIRTABLE_GIGS_LAST_MODIFIED_FIELD
+AIRTABLE_GIG_FEEDBACK_RATING_FIELD
+AIRTABLE_GIG_FEEDBACK_NOTES_FIELD
+AIRTABLE_GIG_FEEDBACK_CLIENT_NAME_FIELD
 AIRTABLE_HOLIDAY_HOTEL_TABLE_ID
 AIRTABLE_HOLIDAY_HOTEL_NAME_FIELD
 AIRTABLE_HOLIDAY_HOTEL_HOTEL_FIELD
@@ -470,11 +483,13 @@ After push, check Vercel deployment logs if anything fails.
 
 ## Data Safety Rules
 
-The portal should be read-only against the production Booking Operations base.
+The portal is mostly read-only against the production Booking Operations base.
 
 Allowed writes:
 
 - Creating/updating token records in the separate Client Portal Sign In Tokens base/table.
+- Creating support request records in the separate auth/support base/table.
+- Updating configured feedback fields on a Gigs record when a signed-in client submits performer feedback for a booking available to their property.
 
 Do not add code that writes to the production Booking Operations base unless MHW explicitly approves it.
 

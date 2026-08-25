@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 export type BookingDetailEvent = {
   accountManager?: string;
@@ -8,9 +8,11 @@ export type BookingDetailEvent = {
   date: string;
   displayDate?: string;
   genres?: string;
+  hasArtistFeedback?: boolean;
   headshot?: string;
   hotel?: string;
   hotelTimezone?: string;
+  id: string;
   instrumentation?: string;
   modPhone?: string;
   performer?: string;
@@ -157,6 +159,37 @@ function getAccountManagerContact(accountManager?: string) {
   return null;
 }
 
+type FeedbackStatus = "error" | "idle" | "success" | "submitting";
+
+function getSubmittedFeedbackIds() {
+  if (typeof window === "undefined") return new Set<string>();
+
+  try {
+    const storedIds = JSON.parse(
+      window.sessionStorage.getItem("mhw_artist_feedback_submitted") || "[]",
+    ) as unknown;
+
+    return new Set(
+      Array.isArray(storedIds)
+        ? storedIds.filter((id): id is string => typeof id === "string")
+        : [],
+    );
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function rememberSubmittedFeedbackId(bookingId: string) {
+  if (typeof window === "undefined") return;
+
+  const submittedIds = getSubmittedFeedbackIds();
+  submittedIds.add(bookingId);
+  window.sessionStorage.setItem(
+    "mhw_artist_feedback_submitted",
+    JSON.stringify([...submittedIds]),
+  );
+}
+
 function PerformerLinkCard({ label, links }: { label: string; links: PerformerLink[] }) {
   return (
     <div className="mhw-modal-detail-card">
@@ -188,6 +221,23 @@ export function BookingDetailModal({
   event: BookingDetailEvent | null;
   onClose: () => void;
 }) {
+  const feedbackSectionRef = useRef<HTMLElement | null>(null);
+  const feedbackNotesRef = useRef<HTMLTextAreaElement | null>(null);
+  const hasRecordedFeedback =
+    Boolean(event?.hasArtistFeedback) || (event ? getSubmittedFeedbackIds().has(event.id) : false);
+  const [feedbackHoverRating, setFeedbackHoverRating] = useState(0);
+  const [feedbackNotes, setFeedbackNotes] = useState("");
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackStatus, setFeedbackStatus] = useState<FeedbackStatus>(
+    hasRecordedFeedback ? "success" : "idle",
+  );
+  const [feedbackMessage, setFeedbackMessage] = useState(
+    hasRecordedFeedback
+      ? "Feedback is already on file for this booking."
+      : "",
+  );
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(hasRecordedFeedback);
+
   useEffect(() => {
     if (!event) return;
 
@@ -198,6 +248,13 @@ export function BookingDetailModal({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [event, onClose]);
+
+  useEffect(() => {
+    if (!isFeedbackOpen) return;
+
+    feedbackSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => feedbackNotesRef.current?.focus(), 360);
+  }, [isFeedbackOpen]);
 
   if (!event) return null;
 
@@ -223,6 +280,61 @@ export function BookingDetailModal({
   const { socialLinks, websiteLinks } = splitSocialAndWebsiteLinks(event.socialMediaOrWebsite);
   const hasPerformerLinks = socialLinks.length > 0 || websiteLinks.length > 0;
   const additionalLinksHref = getHref(event.additionalPerformanceLinks || "");
+  const isFeedbackSubmitted = feedbackStatus === "success";
+  const canSubmitFeedback =
+    feedbackRating > 0 && feedbackNotes.trim().length >= 5 && !isFeedbackSubmitted;
+  const visibleRating = feedbackHoverRating || feedbackRating;
+  const showFeedbackFields = !isFeedbackSubmitted || feedbackRating > 0 || Boolean(feedbackNotes.trim());
+
+  async function handleFeedbackSubmit(formEvent: FormEvent<HTMLFormElement>) {
+    formEvent.preventDefault();
+
+    if (!event || !canSubmitFeedback || feedbackStatus === "submitting") return;
+
+    setFeedbackStatus("submitting");
+    setFeedbackMessage("");
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 20000);
+
+    try {
+      const response = await fetch("/api/calendar/feedback", {
+        body: JSON.stringify({
+          bookingId: event.id,
+          notes: feedbackNotes,
+          rating: feedbackRating,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        signal: controller.signal,
+      });
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(body?.error || "Feedback could not be submitted.");
+      }
+
+      setFeedbackStatus("success");
+      rememberSubmittedFeedbackId(event.id);
+      setFeedbackMessage(
+        "Feedback is now on file for this booking.",
+      );
+    } catch (error) {
+      setFeedbackStatus("error");
+      setFeedbackMessage(
+        error instanceof Error && error.name === "AbortError"
+          ? "The feedback request took too long. Please try again."
+          : error instanceof Error
+          ? error.message
+          : "We could not submit feedback right now. Please try again.",
+      );
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }
+
   return (
     <div className="mhw-modal-backdrop" onMouseDown={onClose} role="presentation">
       <section
@@ -351,6 +463,131 @@ export function BookingDetailModal({
             </div>
           </section>
 
+          {isFeedbackOpen ? (
+            <section
+              className={`mhw-modal-section mhw-feedback-section is-revealed${
+                isFeedbackSubmitted ? " is-submitted" : ""
+              }`}
+              ref={feedbackSectionRef}
+            >
+              <div className="mhw-modal-section-heading">
+                <p className="mhw-kicker">Performer Feedback</p>
+                <h3>Artist feedback form</h3>
+                <p>
+                  {isFeedbackSubmitted
+                    ? "Feedback is already on file for this booking."
+                    : "The booking and signed-in contact details are connected automatically."}
+                </p>
+              </div>
+              {!isFeedbackSubmitted ? (
+                <>
+                  <div className="mhw-feedback-guidance">
+                    <strong>Rate the performer and add any notes for MHW.</strong>
+                    <span>Your name will be included automatically from your portal sign-in.</span>
+                  </div>
+                  <div className="mhw-feedback-context-grid" aria-label="Feedback booking context">
+                    <div>
+                      <span>Performer</span>
+                      <strong>{event.performer || "Performer pending"}</strong>
+                    </div>
+                    <div>
+                      <span>Date</span>
+                      <strong>{getEventDateLabel(event)}</strong>
+                    </div>
+                    <div>
+                      <span>Time</span>
+                      <strong>{event.time || "Time pending"}</strong>
+                    </div>
+                    <div>
+                      <span>Venue</span>
+                      <strong>{event.venue || "Venue pending"}</strong>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+              <form className="mhw-feedback-form" onSubmit={handleFeedbackSubmit}>
+                {showFeedbackFields ? (
+                  <>
+                    <div className="mhw-feedback-field is-full">
+                      <span id="feedback-rating-label">Performer rating</span>
+                      <div
+                        aria-labelledby="feedback-rating-label"
+                        className="mhw-feedback-rating"
+                        role="radiogroup"
+                      >
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            aria-checked={feedbackRating === rating}
+                            aria-label={`${rating} star${rating === 1 ? "" : "s"}`}
+                            className={visibleRating >= rating ? "is-active" : ""}
+                            disabled={isFeedbackSubmitted}
+                            key={rating}
+                            onClick={() => setFeedbackRating(rating)}
+                            onMouseEnter={() => setFeedbackHoverRating(rating)}
+                            onMouseLeave={() => setFeedbackHoverRating(0)}
+                            role="radio"
+                            type="button"
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mhw-feedback-field is-full">
+                      <label htmlFor="feedback-notes">Hotel feedback notes</label>
+                      <textarea
+                        disabled={isFeedbackSubmitted}
+                        id="feedback-notes"
+                        onChange={(inputEvent) => setFeedbackNotes(inputEvent.target.value)}
+                        placeholder="Share what went well or what MHW should know."
+                        ref={feedbackNotesRef}
+                        required
+                        rows={5}
+                        value={feedbackNotes}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="mhw-feedback-submitted-panel">
+                    <strong>{feedbackMessage || "Feedback is already on file for this booking."}</strong>
+                    <p>
+                      To protect submitted notes, feedback details are kept with MHW. Contact MHW
+                      if anything needs to be changed.
+                    </p>
+                  </div>
+                )}
+                {feedbackMessage && !isFeedbackSubmitted ? (
+                  <p className={`mhw-feedback-message is-${feedbackStatus}`}>{feedbackMessage}</p>
+                ) : null}
+                <div className="mhw-feedback-actions">
+                  <button
+                    className="mhw-secondary-button"
+                    onClick={() => {
+                      if (isFeedbackSubmitted) {
+                        setIsFeedbackOpen(false);
+                        return;
+                      }
+
+                      setIsFeedbackOpen(false);
+                    }}
+                    type="button"
+                  >
+                    {isFeedbackSubmitted ? "Done" : "Cancel"}
+                  </button>
+                  {!isFeedbackSubmitted ? (
+                    <button
+                      className="mhw-primary-button"
+                      disabled={!canSubmitFeedback || feedbackStatus === "submitting"}
+                      type="submit"
+                    >
+                      {feedbackStatus === "submitting" ? "Submitting..." : "Submit artist feedback"}
+                    </button>
+                  ) : null}
+                </div>
+              </form>
+            </section>
+          ) : null}
+
           {planningItems.length > 0 ? (
             <section className="mhw-modal-section mhw-modal-section-muted">
               <div className="mhw-modal-section-heading">
@@ -395,9 +632,15 @@ export function BookingDetailModal({
         </div>
 
         <div className="mhw-modal-footer">
-          <button className="mhw-secondary-button" onClick={onClose} type="button">
-            Close
-          </button>
+          {!isFeedbackOpen ? (
+            <button
+              className="mhw-primary-button"
+              onClick={() => setIsFeedbackOpen(true)}
+              type="button"
+            >
+              {hasRecordedFeedback ? "View artist feedback status" : "Give artist feedback"}
+            </button>
+          ) : null}
           <a
             className="mhw-primary-button"
             href="https://www.mhwlivemusic.com/contact"
@@ -406,6 +649,9 @@ export function BookingDetailModal({
           >
             Contact MHW
           </a>
+          <button className="mhw-secondary-button" onClick={onClose} type="button">
+            Close
+          </button>
         </div>
       </section>
     </div>

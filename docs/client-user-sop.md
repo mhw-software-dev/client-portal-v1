@@ -60,7 +60,7 @@ Clients can:
 - Move between months/weeks.
 - Review bookings added since Sunday.
 - Open booking details.
-- Submit performer feedback from a booking detail page.
+- Submit performer feedback from a booking detail page once the booking date has arrived.
 - Download calendar events.
 - Review times in the property's timezone.
 
@@ -81,7 +81,7 @@ Booking details may include:
 - Promo video, when available
 - MHW contact information
 
-Clients can click `Submit feedback` from a booking detail page to share a performer rating and hotel feedback notes for that specific booking. The portal connects the feedback to the signed-in client contact automatically.
+Clients can click `Give artist feedback` from a booking detail page to share a performer rating and hotel feedback notes for that specific booking. Artist feedback is available on or after the booking date. The portal connects the feedback to the signed-in client contact automatically.
 
 ## Profile Page
 

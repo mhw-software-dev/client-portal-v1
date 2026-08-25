@@ -31,6 +31,17 @@ const dateLabelFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+const hotelTimezoneMap: Record<string, string> = {
+  CDT: "America/Chicago",
+  CST: "America/Chicago",
+  EDT: "America/New_York",
+  EST: "America/New_York",
+  MDT: "America/Denver",
+  MST: "America/Denver",
+  PDT: "America/Los_Angeles",
+  PST: "America/Los_Angeles",
+};
+
 function getEventDate(event: BookingDetailEvent) {
   const rawDate = event.date.trim();
 
@@ -53,6 +64,48 @@ function getEventDate(event: BookingDetailEvent) {
 
 function getEventDateLabel(event: BookingDetailEvent) {
   return event.displayDate?.trim() || dateLabelFormatter.format(getEventDate(event));
+}
+
+function getDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getTodayForHotelTimezone(hotelTimezone?: string) {
+  const trimmedTimezone = hotelTimezone?.trim();
+  const mappedTimezone = trimmedTimezone
+    ? hotelTimezoneMap[trimmedTimezone.toUpperCase()] || trimmedTimezone
+    : undefined;
+
+  if (!mappedTimezone) return new Date();
+
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: mappedTimezone,
+      year: "numeric",
+    }).formatToParts(new Date());
+    const year = Number(parts.find((part) => part.type === "year")?.value);
+    const month = Number(parts.find((part) => part.type === "month")?.value);
+    const day = Number(parts.find((part) => part.type === "day")?.value);
+
+    if (!year || !month || !day) return new Date();
+
+    return new Date(year, month - 1, day);
+  } catch {
+    return new Date();
+  }
+}
+
+function isFeedbackAvailableForEvent(event: BookingDetailEvent) {
+  const eventDate = getEventDate(event);
+  if (Number.isNaN(eventDate.getTime())) return false;
+
+  return getDateKey(eventDate) <= getDateKey(getTodayForHotelTimezone(event.hotelTimezone));
 }
 
 function hasContent(value?: string) {
@@ -281,8 +334,12 @@ export function BookingDetailModal({
   const hasPerformerLinks = socialLinks.length > 0 || websiteLinks.length > 0;
   const additionalLinksHref = getHref(event.additionalPerformanceLinks || "");
   const isFeedbackSubmitted = feedbackStatus === "success";
+  const isFeedbackAvailable = isFeedbackAvailableForEvent(event);
   const canSubmitFeedback =
-    feedbackRating > 0 && feedbackNotes.trim().length >= 5 && !isFeedbackSubmitted;
+    isFeedbackAvailable &&
+    feedbackRating > 0 &&
+    feedbackNotes.trim().length >= 5 &&
+    !isFeedbackSubmitted;
   const visibleRating = feedbackHoverRating || feedbackRating;
   const showFeedbackFields = !isFeedbackSubmitted || feedbackRating > 0 || Boolean(feedbackNotes.trim());
 
@@ -632,7 +689,7 @@ export function BookingDetailModal({
         </div>
 
         <div className="mhw-modal-footer">
-          {!isFeedbackOpen ? (
+          {!isFeedbackOpen && (isFeedbackAvailable || hasRecordedFeedback) ? (
             <button
               className="mhw-primary-button"
               onClick={() => setIsFeedbackOpen(true)}

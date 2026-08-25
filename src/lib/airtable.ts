@@ -1,5 +1,16 @@
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
 
+const hotelTimezoneMap: Record<string, string> = {
+  CDT: "America/Chicago",
+  CST: "America/Chicago",
+  EDT: "America/New_York",
+  EST: "America/New_York",
+  MDT: "America/Denver",
+  MST: "America/Denver",
+  PDT: "America/Los_Angeles",
+  PST: "America/Los_Angeles",
+};
+
 type AirtableFieldValue =
   | string
   | number
@@ -920,6 +931,7 @@ export async function submitClientBookingFeedback({
 
   const hotel = await airtableGetRecord(config.clientsTableId ?? "", hotelRecordId);
   const hotelName = getHotelName(hotel, config.hotelNameField);
+  const hotelTimezone = stringifyField(hotel.fields[config.hotelTimezoneField]);
 
   if (!hotelName) {
     throw new Error("Linked hotel record does not have a readable hotel name.");
@@ -929,6 +941,10 @@ export async function submitClientBookingFeedback({
 
   if (!gig) {
     throw new Error("This booking is not available for the signed-in client.");
+  }
+
+  if (!isGigAvailableForFeedback(gig, hotelTimezone)) {
+    throw new Error("Artist feedback is available on or after the booking date.");
   }
 
   const contactEmail =
@@ -1098,6 +1114,48 @@ function getHolidayNameFromPrimaryField(primaryField: string) {
 function getDateSortValue(dateValue: string) {
   const parsed = parseDateValue(dateValue);
   return parsed ? parsed.getTime() : Number.MAX_SAFE_INTEGER;
+}
+
+function getDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getTodayForTimezone(timezone?: string) {
+  const trimmedTimezone = timezone?.trim();
+  const mappedTimezone = trimmedTimezone
+    ? hotelTimezoneMap[trimmedTimezone.toUpperCase()] || trimmedTimezone
+    : undefined;
+
+  if (!mappedTimezone) return new Date();
+
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: mappedTimezone,
+      year: "numeric",
+    }).formatToParts(new Date());
+    const year = Number(parts.find((part) => part.type === "year")?.value);
+    const month = Number(parts.find((part) => part.type === "month")?.value);
+    const day = Number(parts.find((part) => part.type === "day")?.value);
+
+    if (!year || !month || !day) return new Date();
+
+    return new Date(year, month - 1, day);
+  } catch {
+    return new Date();
+  }
+}
+
+function isGigAvailableForFeedback(gig: AirtableRecord, hotelTimezone?: string) {
+  const gigDate = parseDateValue(stringifyField(gig.fields.Date));
+  if (!gigDate) return false;
+
+  return getDateKey(gigDate) <= getDateKey(getTodayForTimezone(hotelTimezone));
 }
 
 function getYearFromDateValue(dateValue: string) {

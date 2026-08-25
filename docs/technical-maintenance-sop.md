@@ -8,7 +8,7 @@ Use this SOP to understand how the MHW Client Portal is implemented, what system
 
 The MHW Client Portal is a custom Next.js application for hotel clients. It lets approved hotel contacts securely sign in and review their property's live entertainment schedule, performer details, holiday coverage, schedule progress, this month and next month's entertainment counts, and calendar exports.
 
-Clients can also submit performer feedback from a booking detail modal. That workflow writes only configured feedback fields back to the related Gigs record after the server confirms the signed-in contact has access to that booking.
+Clients can also submit performer feedback from a booking detail modal once the booking date has arrived. That workflow writes only configured feedback fields back to the related Gigs record after the server confirms the signed-in contact has access to that booking.
 
 The portal uses Airtable as the backend data source, Resend for sign-in emails, GitHub for source control, and Vercel for hosting.
 
@@ -317,7 +317,7 @@ Important behavior:
 - Times are shown in the hotel's timezone.
 - Downloaded calendar events use timezone-aware event data.
 - Booking detail modals can be opened from calendar bookings, weekly entertainment, and holiday coverage.
-- Booking detail modals include a `Submit feedback` action. The feedback form submits the rating and feedback notes to `/api/calendar/feedback`; the server adds the signed-in contact name automatically.
+- Booking detail modals include a `Give artist feedback` action only when the booking date is today or in the past. The feedback form submits the rating and feedback notes to `/api/calendar/feedback`; the server adds the signed-in contact name automatically and also blocks future booking dates.
 - A top green progress bar appears during route navigation and calendar data loading.
 - The calendar loading/status toast is centered near the bottom and positioned above the support widget on mobile.
 

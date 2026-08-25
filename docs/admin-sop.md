@@ -51,7 +51,7 @@ Clients only see booking data connected to their property. The portal currently 
 - Full calendar with month/week range options and calendar/list format options
 - Calendar summary for bookings added during the current week
 - Booking details
-- Performer feedback submission from booking details
+- Performer feedback submission from booking details for booking dates that have arrived
 - Performer details
 - Holiday coverage
 - Schedule progress
@@ -74,5 +74,6 @@ Clients only see booking data connected to their property. The portal currently 
 - Do not delete client contacts just to remove portal access.
 - The portal should remain read-only for clients.
 - The approved exception is performer feedback from a booking detail page, which writes feedback fields back to the related Gigs record.
+- Artist feedback is available only on or after the booking date and is blocked for future gigs.
 - If a client cannot sign in, first confirm their email exists in Hotel Contacts and meets the access rules above.
 - If a client sees the wrong property, check the Hotel Contacts to Hotels relationship.

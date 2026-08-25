@@ -43,7 +43,7 @@ Clients can:
 - Switch between Calendar and List formats.
 - Review bookings added during the current week.
 - Open detailed booking information.
-- Give artist feedback for a specific booking.
+- Give artist feedback for a specific booking once the booking date has arrived.
 - Download calendar events.
 - Review times in the property's timezone.
 
@@ -60,7 +60,7 @@ Booking detail pages may include:
 
 ## Artist Feedback
 
-From a booking detail page, clients can click `Give artist feedback` to submit a performer rating and hotel feedback notes for that specific booking.
+From a booking detail page, clients can click `Give artist feedback` to submit a performer rating and hotel feedback notes for that specific booking once the booking date has arrived.
 
 The portal connects the feedback to the booking and signed-in client contact automatically. If feedback is already on file for a booking, the portal shows a recorded status instead of allowing another submission.
 

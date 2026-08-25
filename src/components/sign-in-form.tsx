@@ -127,7 +127,7 @@ export function SignInForm() {
         </div>
       ) : (
         <p className="mhw-auth-note" id="client-email-help">
-          Use the email address connected to your MHW client contact profile.
+          Links expire for security.
         </p>
       )}
     </form>

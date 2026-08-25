@@ -35,16 +35,11 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             <p className="mhw-kicker">Client Portal</p>
             <h1 id="sign-in-title">Sign in to your MHW portal.</h1>
             <p>
-              Enter the email MHW has on file. Approved client contacts will receive
-              a secure sign-in link.
+              Enter your approved client email to receive a secure sign-in link.
             </p>
           </div>
           <SignInErrorNotice error={error} reason={reason} />
           <SignInForm />
-          <p className="mhw-auth-security-note">
-            Secure links expire for your protection. Access is limited to approved
-            MHW client contacts.
-          </p>
           <div className="mhw-auth-help">
             <p>Need access?</p>
             <Link href="https://www.mhwlivemusic.com/contact" target="_blank">
